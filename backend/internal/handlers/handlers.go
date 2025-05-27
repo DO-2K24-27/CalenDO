@@ -5,8 +5,20 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/do2024-2047/CalenDO/internal/models"
+	"github.com/do2024-2047/CalenDO/internal/repository"
 	"github.com/gorilla/mux"
 )
+
+var (
+	// eventRepo is the event repository used for database operations
+	eventRepo *repository.EventRepository
+)
+
+// InitializeHandlers initializes the handlers with dependencies
+func InitializeHandlers(er *repository.EventRepository) {
+	eventRepo = er
+}
 
 // RegisterRoutes sets up all API routes
 func RegisterRoutes(r *mux.Router) {
@@ -31,31 +43,51 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetEventsHandler returns all events
 func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
-	// This would typically fetch from a database
+	events, err := eventRepo.FindAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to response format
+	var responses []models.EventResponse
+	for _, event := range events {
+		responses = append(responses, event.ToResponse())
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode([]map[string]interface{}{
-		{
-			"uid":           "1",
-			"summary":       "Team Meeting",
-			"description":   "Weekly team sync",
-			"location":      "Conference Room A",
-			"start_time":    "2025-05-28T09:00:00Z",
-			"end_time":      "2025-05-28T10:00:00Z",
-			"created":       "2025-05-27T09:00:00Z",
-			"last_modified": "2025-05-27T09:00:00Z",
-		},
-	})
+	json.NewEncoder(w).Encode(responses)
 }
 
 // CreateEventHandler creates a new event
 func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
-	// This would typically insert into a database
+	var input models.EventInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Create a new event from the input
+	event := models.NewEvent(
+		input.Summary,
+		input.Description,
+		input.Location,
+		input.StartTime,
+		input.EndTime,
+	)
+
+	// Save the event to the database
+	if err := eventRepo.Create(event); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{
+	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "created",
-		"uid":    "2",
+		"uid":    event.UID,
 	})
 }
 
@@ -64,19 +96,18 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]
 
-	// This would typically fetch from a database
+	event, err := eventRepo.FindByID(eventUID)
+	if err == repository.ErrNotFound {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"uid":           eventUID,
-		"summary":       "Team Meeting",
-		"description":   "Weekly team sync",
-		"location":      "Conference Room A",
-		"start_time":    "2025-05-28T09:00:00Z",
-		"end_time":      "2025-05-28T10:00:00Z",
-		"created":       "2025-05-27T09:00:00Z",
-		"last_modified": "2025-05-27T09:00:00Z",
-	})
+	json.NewEncoder(w).Encode(event.ToResponse())
 }
 
 // UpdateEventHandler updates an existing event
@@ -84,7 +115,36 @@ func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]
 
-	// This would typically update in a database
+	// Check if event exists
+	existingEvent, err := eventRepo.FindByID(eventUID)
+	if err == repository.ErrNotFound {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Parse the input
+	var input models.EventInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Update the existing event
+	existingEvent.Summary = input.Summary
+	existingEvent.Description = input.Description
+	existingEvent.Location = input.Location
+	existingEvent.StartTime = input.StartTime
+	existingEvent.EndTime = input.EndTime
+
+	// Save the updated event
+	if err := eventRepo.Update(existingEvent); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -98,7 +158,16 @@ func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]
 
-	// This would typically delete from a database
+	// Delete the event
+	err := eventRepo.Delete(eventUID)
+	if err == repository.ErrNotFound {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{

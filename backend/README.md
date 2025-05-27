@@ -7,6 +7,7 @@ A simple calendar events API written in Go.
 ### Prerequisites
 
 - Go 1.20 or higher
+- PostgreSQL database
 
 ### Installing Dependencies
 
@@ -14,10 +15,56 @@ A simple calendar events API written in Go.
 go mod tidy
 ```
 
-### Running the API
+### Database Setup
+
+#### Option 1: Using Docker Compose
+
+The easiest way to set up the database is to use the provided Docker Compose file:
 
 ```bash
-go run cmd/api/main.go
+# Start PostgreSQL
+docker-compose up -d database
+```
+
+#### Option 2: Manual Setup
+
+1. Create a PostgreSQL database for the application:
+
+```bash
+createdb calendo
+```
+
+2. Configure database connection in `configs/config.yaml`
+
+### Running the API
+
+You can run the API using the provided Makefile:
+
+```bash
+# Run the API server
+make run
+
+# Build the binary
+make build
+
+# Seed the database with sample data (optional)
+make seed
+
+# Update dependencies
+make deps
+
+# Run tests
+make test
+```
+
+Or run the commands directly:
+
+```bash
+# Run the API server
+go run api/main.go
+
+# Seed the database with sample data (optional)
+go run cmd/seed/main.go
 ```
 
 The API will be available at `http://localhost:8080`.
@@ -72,6 +119,23 @@ The event object follows this structure:
   "last_modified": "datetime (ISO 8601)"
 }
 ```
+
+## Technologies
+
+### ORM (Object-Relational Mapping)
+
+This project uses [GORM](https://gorm.io/) - The fantastic ORM library for Go:
+
+- Full-featured ORM
+- Associations (has one, has many, belongs to, many to many)
+- Hooks (before/after create/save/update/delete/find)
+- Eager loading with Preload, Joins
+- Transactions, Nested Transactions, Save Point, RollbackTo
+- Context, Prepared Statement Mode, DryRun Mode
+- Batch Insert, FindInBatches, Find/Create with Map, CRUD with SQL Expr
+- SQL Builder, Subquery
+
+For details on how GORM was implemented in this project, see [GORM_IMPLEMENTATION.md](./GORM_IMPLEMENTATION.md).
 
 ## Project Structure
 

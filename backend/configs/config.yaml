@@ -4,8 +4,16 @@ environment: development
 
 # Database configuration
 database:
-  driver: sqlite
-  connection_string: "calendo.db"
+  driver: postgres
+  host: ${DB_HOST:-localhost}
+  port: ${DB_PORT:-5433}
+  username: ${DB_USER:-postgres}
+  password: ${DB_PASSWORD:-postgres}
+  dbname: ${DB_NAME:-calendo}
+  sslmode: disable
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: 5m
 
 # Logging configuration
 logging:

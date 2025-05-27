@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: calendo_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: calendo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: calendo_api
+    depends_on:
+      - database
+    environment:
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=calendo
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/configs:/app/configs
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
