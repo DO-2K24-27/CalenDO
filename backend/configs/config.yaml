@@ -1,0 +1,24 @@
+# CalenDO API Configuration
+port: 8080
+environment: development
+
+# Database configuration
+database:
+  driver: sqlite
+  connection_string: "calendo.db"
+
+# Logging configuration
+logging:
+  level: debug
+  file: "logs/api.log"
+
+# CORS settings
+cors:
+  allowed_origins:
+    - "*"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
