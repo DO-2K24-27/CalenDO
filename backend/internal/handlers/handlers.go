@@ -13,9 +13,9 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/health", HealthCheckHandler).Methods("GET")
 	r.HandleFunc("/api/events", GetEventsHandler).Methods("GET")
 	r.HandleFunc("/api/events", CreateEventHandler).Methods("POST")
-	r.HandleFunc("/api/events/{id}", GetEventHandler).Methods("GET")
-	r.HandleFunc("/api/events/{id}", UpdateEventHandler).Methods("PUT")
-	r.HandleFunc("/api/events/{id}", DeleteEventHandler).Methods("DELETE")
+	r.HandleFunc("/api/events/{uid}", GetEventHandler).Methods("GET")
+	r.HandleFunc("/api/events/{uid}", UpdateEventHandler).Methods("PUT")
+	r.HandleFunc("/api/events/{uid}", DeleteEventHandler).Methods("DELETE")
 }
 
 // HealthCheckHandler returns API status
@@ -36,11 +36,14 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode([]map[string]interface{}{
 		{
-			"id":          "1",
-			"title":       "Team Meeting",
-			"description": "Weekly team sync",
-			"start_time":  "2025-05-28T09:00:00Z",
-			"end_time":    "2025-05-28T10:00:00Z",
+			"uid":           "1",
+			"summary":       "Team Meeting",
+			"description":   "Weekly team sync",
+			"location":      "Conference Room A",
+			"start_time":    "2025-05-28T09:00:00Z",
+			"end_time":      "2025-05-28T10:00:00Z",
+			"created":       "2025-05-27T09:00:00Z",
+			"last_modified": "2025-05-27T09:00:00Z",
 		},
 	})
 }
@@ -52,51 +55,54 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{
 		"status": "created",
-		"id":     "2",
+		"uid":    "2",
 	})
 }
 
-// GetEventHandler returns a specific event by ID
+// GetEventHandler returns a specific event by UID
 func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	eventID := vars["id"]
+	eventUID := vars["uid"]
 
 	// This would typically fetch from a database
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"id":          eventID,
-		"title":       "Team Meeting",
-		"description": "Weekly team sync",
-		"start_time":  "2025-05-28T09:00:00Z",
-		"end_time":    "2025-05-28T10:00:00Z",
+		"uid":           eventUID,
+		"summary":       "Team Meeting",
+		"description":   "Weekly team sync",
+		"location":      "Conference Room A",
+		"start_time":    "2025-05-28T09:00:00Z",
+		"end_time":      "2025-05-28T10:00:00Z",
+		"created":       "2025-05-27T09:00:00Z",
+		"last_modified": "2025-05-27T09:00:00Z",
 	})
 }
 
 // UpdateEventHandler updates an existing event
 func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	eventID := vars["id"]
+	eventUID := vars["uid"]
 
 	// This would typically update in a database
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "updated",
-		"id":     eventID,
+		"uid":    eventUID,
 	})
 }
 
 // DeleteEventHandler removes an existing event
 func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	eventID := vars["id"]
+	eventUID := vars["uid"]
 
 	// This would typically delete from a database
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "deleted",
-		"id":     eventID,
+		"uid":    eventUID,
 	})
 }

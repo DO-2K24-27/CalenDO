@@ -43,17 +43,34 @@ POST /api/events
 
 - Get a specific event:
 ```
-GET /api/events/{id}
+GET /api/events/{uid}
 ```
 
 - Update an event:
 ```
-PUT /api/events/{id}
+PUT /api/events/{uid}
 ```
 
 - Delete an event:
 ```
-DELETE /api/events/{id}
+DELETE /api/events/{uid}
+```
+
+## Event Schema
+
+The event object follows this structure:
+
+```json
+{
+  "uid": "string",
+  "summary": "string",
+  "description": "string",
+  "location": "string",
+  "start_time": "datetime (ISO 8601)",
+  "end_time": "datetime (ISO 8601)",
+  "created": "datetime (ISO 8601)",
+  "last_modified": "datetime (ISO 8601)"
+}
 ```
 
 ## Project Structure
