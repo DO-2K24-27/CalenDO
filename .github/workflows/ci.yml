@@ -1,0 +1,87 @@
+name: CalenDO CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: github-runner-do
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x' # Based on your go.mod file
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Build
+        working-directory: ./backend
+        run: go build -v ./...
+
+      - name: Test
+        working-directory: ./backend
+        run: go test -v ./...
+
+      - name: Generate Swagger docs
+        working-directory: ./backend
+        run: |
+          go install github.com/swaggo/swag/cmd/swag@latest
+          swag init -g api/main.go -o docs
+
+  lint:
+    runs-on: github-runner-do
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: ./backend
+
+  docker:
+    needs: [build-and-test, lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: github-runner-do
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/calendo-api:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/calendo-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
