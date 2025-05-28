@@ -39,9 +39,6 @@ jobs:
     needs: [build-and-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: github-runner-do
-    permissions:
-      packages: write
-      contents: read
     steps:
       - uses: actions/checkout@v4
 
