@@ -58,5 +58,5 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            '${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}'
-            '${{ vars.REGISTRY_URL }}/calendo-api:latest'
+            ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-api:latest
