@@ -1,0 +1,177 @@
+# Default values for CalenDO Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Backend specific configuration
+backend:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: calendoapi
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+  imagePullSecrets: []
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  # Configurable health checks
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /api/health
+      port: http
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /api/health
+      port: http
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: calendo.do-polytech.fr
+        paths:
+          - path: /api
+            pathType: ImplementationSpecific
+    tls:
+      - secretName: calendo-tls-secret
+        hosts:
+          - calendo.do-polytech.fr
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # Application specific configuration
+  env:
+    # General settings
+    PORT: "8080"
+    ENVIRONMENT: "production"
+    
+    # Database settings
+    DB_HOST: "calendoapi-postgresql"
+    DB_PORT: "5432"
+    DB_USER: "postgres"
+    DB_PASSWORD: "postgres"
+    DB_NAME: "calendo"
+
+  # ConfigMap data
+  configMapData:
+    config.yaml: |
+      port: 8080
+      environment: production
+
+      # Database configuration
+      database:
+        driver: postgres
+        host: ${DB_HOST}
+        port: ${DB_PORT}
+        username: ${DB_USER}
+        password: ${DB_PASSWORD}
+        dbname: ${DB_NAME}
+        sslmode: disable
+        max_open_conns: 25
+        max_idle_conns: 5
+        conn_max_lifetime: 5m
+
+      # Logging configuration
+      logging:
+        level: info
+        file: "logs/api.log"
+
+      # CORS settings
+      cors:
+        allowed_origins:
+          - "*"
+        allowed_methods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+
+# Frontend section (placeholder for future use)
+frontend:
+  enabled: false
+  # Add frontend specific configurations here
+  # This is a placeholder for future implementation
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    username: postgres
+    password: postgres
+    database: calendo
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
