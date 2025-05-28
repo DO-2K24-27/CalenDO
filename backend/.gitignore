@@ -1,0 +1,38 @@
+# Ignore generated Swagger files
+docs/docs.go
+docs/swagger.json
+docs/swagger.yaml
+
+# Keep the docs directory itself
+!docs/
+!docs/swagger.go
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+calendo
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS-specific files
+.DS_Store
+Thumbs.db

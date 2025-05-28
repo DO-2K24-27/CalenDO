@@ -9,14 +9,20 @@ import (
 	"syscall"
 	"time"
 
+	// Import the docs package for Swagger
+	_ "github.com/do2024-2047/CalenDO/docs"
 	"github.com/do2024-2047/CalenDO/internal/database"
 	"github.com/do2024-2047/CalenDO/internal/handlers"
 	"github.com/do2024-2047/CalenDO/internal/middleware"
 	"github.com/do2024-2047/CalenDO/internal/repository"
 	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title CalenDO API
+// @version 1.0
+// @description This is the CalenDO API Server for calendar event management.
 func main() {
 	// Initialize configuration
 	initConfig()
@@ -39,6 +45,19 @@ func main() {
 	// Register routes with event repository
 	handlers.InitializeHandlers(eventRepo)
 	handlers.RegisterRoutes(r)
+
+	// Serve the Swagger JSON file directly
+	r.HandleFunc("/swagger/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./docs/swagger.json")
+	})
+
+	// Swagger endpoints
+	r.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+		httpSwagger.URL("/swagger/swagger.json"),
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	)).Methods(http.MethodGet)
 
 	// Add middleware
 	r.Use(middleware.Logger)

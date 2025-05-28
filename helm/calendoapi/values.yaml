@@ -84,6 +84,8 @@ backend:
         paths:
           - path: /api
             pathType: ImplementationSpecific
+          - path: /swagger
+            pathType: ImplementationSpecific
     tls:
       - secretName: calendo-tls-secret
         hosts:

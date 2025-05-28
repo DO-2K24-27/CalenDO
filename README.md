@@ -12,6 +12,7 @@ CalenDO is a complete calendar management system featuring a Go-based RESTful AP
 - Create, read, update, and delete calendar events
 - Event details include summary, description, location, start time, and end time
 - RESTful API endpoints for event management
+- API documentation with Swagger/OpenAPI
 - Kubernetes deployment support with scalable configuration
 - Docker containerization for easy deployment
 
@@ -41,6 +42,24 @@ The following endpoints are available:
 - Get a specific event: `GET /api/events/{uid}`
 - Update an event: `PUT /api/events/{uid}`
 - Delete an event: `DELETE /api/events/{uid}`
+
+## API Documentation
+
+The API is documented using Swagger/OpenAPI. After running the server, you can access the Swagger UI at:
+
+```bash
+http://localhost:8080/swagger/index.html
+```
+
+The Swagger documentation files are generated and not included in version control (they're added to `.gitignore`). To generate the documentation:
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Generate Swagger documentation
+make swagger
+```
 
 ## Backend Development
 

@@ -1,6 +1,6 @@
 # CalenDO API Makefile
 
-.PHONY: run build clean migrate seed test
+.PHONY: run build clean migrate seed test swagger
 
 # Go parameters
 GOCMD=go
@@ -10,6 +10,9 @@ GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
+
+# Swagger parameters
+SWAGCMD=swag
 
 # Build parameters
 BINARY_NAME=calendo
@@ -46,3 +49,7 @@ test:
 # Run the API with hot reloading (requires air)
 dev:
 	air -c .air.toml
+
+# Generate Swagger documentation
+swagger:
+	$(SWAGCMD) init -g api/main.go --outputTypes json,yaml

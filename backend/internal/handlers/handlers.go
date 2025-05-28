@@ -30,7 +30,13 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/events/{uid}", DeleteEventHandler).Methods("DELETE")
 }
 
-// HealthCheckHandler returns API status
+// HealthCheckHandler godoc
+// @Summary Get API health status
+// @Description Check if the API is up and running
+// @Tags health
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /api/health [get]
 func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
 		"status": "ok",
@@ -41,7 +47,14 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// GetEventsHandler returns all events
+// GetEventsHandler godoc
+// @Summary Get all events
+// @Description Retrieve all calendar events
+// @Tags events
+// @Produce json
+// @Success 200 {array} models.EventResponse
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/events [get]
 func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 	events, err := eventRepo.FindAll()
 	if err != nil {
@@ -60,7 +73,17 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(responses)
 }
 
-// CreateEventHandler creates a new event
+// CreateEventHandler godoc
+// @Summary Create a new event
+// @Description Create a new calendar event
+// @Tags events
+// @Accept json
+// @Produce json
+// @Param event body models.EventInput true "Event information"
+// @Success 201 {object} map[string]interface{} "status and uid"
+// @Failure 400 {string} string "Invalid request body"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/events [post]
 func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	var input models.EventInput
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -91,7 +114,16 @@ func CreateEventHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetEventHandler returns a specific event by UID
+// GetEventHandler godoc
+// @Summary Get a specific event
+// @Description Get a calendar event by its UID
+// @Tags events
+// @Produce json
+// @Param uid path string true "Event UID"
+// @Success 200 {object} models.EventResponse
+// @Failure 404 {object} string "Event not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/events/{uid} [get]
 func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]
@@ -110,7 +142,19 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(event.ToResponse())
 }
 
-// UpdateEventHandler updates an existing event
+// UpdateEventHandler godoc
+// @Summary Update an existing event
+// @Description Update a calendar event by its UID
+// @Tags events
+// @Accept json
+// @Produce json
+// @Param uid path string true "Event UID"
+// @Param event body models.EventInput true "Updated event information"
+// @Success 200 {object} map[string]interface{} "status and uid"
+// @Failure 400 {object} string "Invalid request body"
+// @Failure 404 {object} string "Event not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/events/{uid} [put]
 func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]
@@ -153,7 +197,16 @@ func UpdateEventHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DeleteEventHandler removes an existing event
+// DeleteEventHandler godoc
+// @Summary Delete an event
+// @Description Delete a calendar event by its UID
+// @Tags events
+// @Produce json
+// @Param uid path string true "Event UID"
+// @Success 200 {object} map[string]interface{} "status and uid"
+// @Failure 404 {object} string "Event not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/events/{uid} [delete]
 func DeleteEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	eventUID := vars["uid"]

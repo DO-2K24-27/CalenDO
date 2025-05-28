@@ -55,6 +55,9 @@ make deps
 
 # Run tests
 make test
+
+# Generate Swagger documentation
+make swagger
 ```
 
 Or run the commands directly:
@@ -68,6 +71,34 @@ go run cmd/seed/main.go
 ```
 
 The API will be available at `http://localhost:8080`.
+
+## API Documentation
+
+The API is documented using Swagger/OpenAPI. After running the server, you can access the Swagger UI at:
+
+```
+http://localhost:8080/swagger/index.html
+```
+
+To generate or update the Swagger documentation, run:
+
+```bash
+make swagger
+```
+
+### Swagger Documentation Files
+
+The Swagger documentation files are generated and **not** included in version control. They are added to `.gitignore` to prevent cluttering the repository with generated files. When you clone the repository, you'll need to generate the Swagger docs before running the API:
+
+```bash
+# Generate Swagger documentation
+make swagger
+
+# Then run the API
+make run
+```
+
+This approach ensures that all developers work with the most up-to-date API documentation based on the current code annotations.
 
 ## API Endpoints
 

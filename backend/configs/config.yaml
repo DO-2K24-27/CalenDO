@@ -5,11 +5,11 @@ environment: development
 # Database configuration
 database:
   driver: postgres
-  host: ${DB_HOST:-localhost}
-  port: ${DB_PORT:-5433}
-  username: ${DB_USER:-postgres}
-  password: ${DB_PASSWORD:-postgres}
-  dbname: ${DB_NAME:-calendo}
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+  dbname: calendo
   sslmode: disable
   max_open_conns: 25
   max_idle_conns: 5
