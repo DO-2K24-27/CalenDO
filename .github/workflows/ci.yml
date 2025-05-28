@@ -48,12 +48,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
+      - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ vars.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_URL }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -61,7 +61,5 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/calendo-api:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/calendo-api:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-api:latest
