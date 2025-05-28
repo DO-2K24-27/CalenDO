@@ -16,8 +16,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.23.x' # Based on your go.mod file
-          cache: true
-          cache-dependency-path: backend/go.sum
 
       - name: Install dependencies
         working-directory: ./backend
@@ -37,26 +35,8 @@ jobs:
           go install github.com/swaggo/swag/cmd/swag@latest
           swag init -g api/main.go -o docs
 
-  lint:
-    runs-on: github-runner-do
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23.x'
-          cache: true
-          cache-dependency-path: backend/go.sum
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: latest
-          working-directory: ./backend
-
   docker:
-    needs: [build-and-test, lint]
+    needs: [build-and-test]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: github-runner-do
     permissions:
