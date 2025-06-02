@@ -35,7 +35,6 @@ jobs:
 
   docker:
     needs: [build-and-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: github-runner-do
     permissions:
       contents: read
@@ -70,3 +69,28 @@ jobs:
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:latest
+
+  deploy:
+    needs: [docker]
+    runs-on: github-runner-do
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+      
+      - name: Configure Kubernetes
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+      
+      - name: Deploy to Kubernetes with Helm
+        run: |
+          helm upgrade --install calendoapi ./helm \
+            --set backend.image.repository=${{ vars.REGISTRY_URL }}/calendo-api \
+            --set backend.image.tag=${{ github.sha }} \
+            --set backend.image.pullPolicy=IfNotPresent \
+            --namespace calendo --create-namespace

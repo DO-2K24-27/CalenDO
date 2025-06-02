@@ -12,7 +12,7 @@ backend:
   
   image:
     repository: calendoapi
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     tag: "latest"
 
   imagePullSecrets: []
