@@ -2,9 +2,7 @@ name: CalenDO CI
 
 on:
   push:
-    branches: [ main, master, develop ]
-  pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main ]
 
 jobs:
   build-and-test:
@@ -15,7 +13,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23.x' # Based on your go.mod file
+          go-version: '1.23.x'
 
       - name: Install dependencies
         working-directory: ./backend
