@@ -89,8 +89,9 @@ jobs:
       
       - name: Deploy to Kubernetes with Helm
         run: |
+          helm dependency build
           helm upgrade --install calendoapi ./helm \
             --set backend.image.repository=${{ vars.REGISTRY_URL }}/calendo-api \
             --set backend.image.tag=${{ github.sha }} \
             --set backend.image.pullPolicy=IfNotPresent \
-            --namespace calendo --create-namespace
+            --namespace hugo-calendo --create-namespace
