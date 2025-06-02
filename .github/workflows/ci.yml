@@ -70,5 +70,5 @@ jobs:
       - name: Keyless signing of Docker images
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
-          cosign sign ${{ vars.REGISTRY_URL }}/calendo-api:latest
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:latest
