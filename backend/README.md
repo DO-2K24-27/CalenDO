@@ -114,25 +114,12 @@ GET /api/health
 GET /api/events
 ```
 
-- Create a new event:
-```
-POST /api/events
-```
-
 - Get a specific event:
 ```
 GET /api/events/{uid}
 ```
 
-- Update an event:
-```
-PUT /api/events/{uid}
-```
-
-- Delete an event:
-```
-DELETE /api/events/{uid}
-```
+**Note: This API is read-only. Create, update, and delete operations are not available.**
 
 ## Event Schema
 

@@ -8,6 +8,7 @@ import (
 	"github.com/do2024-2047/CalenDO/internal/database"
 	"github.com/do2024-2047/CalenDO/internal/models"
 	"github.com/do2024-2047/CalenDO/internal/repository"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -30,31 +31,40 @@ func main() {
 	// Create sample events
 	events := []models.Event{
 		{
-			Summary:     "Team Meeting",
-			Description: "Weekly team sync",
-			Location:    "Conference Room A",
-			StartTime:   time.Now().Add(24 * time.Hour),
-			EndTime:     time.Now().Add(25 * time.Hour),
+			UID:          uuid.New().String(),
+			Summary:      "Team Meeting",
+			Description:  "Weekly team sync",
+			Location:     "Conference Room A",
+			StartTime:    time.Now().Add(24 * time.Hour),
+			EndTime:      time.Now().Add(25 * time.Hour),
+			Created:      time.Now(),
+			LastModified: time.Now(),
 		},
 		{
-			Summary:     "Client Presentation",
-			Description: "Present the new features to the client",
-			Location:    "Main Board Room",
-			StartTime:   time.Now().Add(48 * time.Hour),
-			EndTime:     time.Now().Add(50 * time.Hour),
+			UID:          uuid.New().String(),
+			Summary:      "Client Presentation",
+			Description:  "Present the new features to the client",
+			Location:     "Main Board Room",
+			StartTime:    time.Now().Add(48 * time.Hour),
+			EndTime:      time.Now().Add(50 * time.Hour),
+			Created:      time.Now(),
+			LastModified: time.Now(),
 		},
 		{
-			Summary:     "Product Launch",
-			Description: "Launch the new product version",
-			Location:    "Online - Zoom",
-			StartTime:   time.Now().Add(72 * time.Hour),
-			EndTime:     time.Now().Add(74 * time.Hour),
+			UID:          uuid.New().String(),
+			Summary:      "Product Launch",
+			Description:  "Launch the new product version",
+			Location:     "Online - Zoom",
+			StartTime:    time.Now().Add(72 * time.Hour),
+			EndTime:      time.Now().Add(74 * time.Hour),
+			Created:      time.Now(),
+			LastModified: time.Now(),
 		},
 	}
 
-	// Insert events into the database
+	// Insert events directly into the database
 	for i := range events {
-		if err := eventRepo.Create(&events[i]); err != nil {
+		if err := database.DB.Create(&events[i]).Error; err != nil {
 			log.Printf("Failed to create event %s: %v", events[i].Summary, err)
 		} else {
 			log.Printf("Created event: %s with UID: %s", events[i].Summary, events[i].UID)

@@ -4,15 +4,6 @@ import (
 	"time"
 )
 
-// EventInput represents the structure for creating or updating an event
-type EventInput struct {
-	Summary     string    `json:"summary"`
-	Description string    `json:"description"`
-	Location    string    `json:"location"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
-}
-
 // EventResponse represents the response structure for an event
 type EventResponse struct {
 	UID          string    `json:"uid"`

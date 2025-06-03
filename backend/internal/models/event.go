@@ -20,17 +20,3 @@ type Event struct {
 func (Event) TableName() string {
 	return "calendar"
 }
-
-// NewEvent creates a new event
-func NewEvent(summary, description, location string, startTime, endTime time.Time) *Event {
-	now := time.Now()
-	return &Event{
-		Summary:      summary,
-		Description:  description,
-		Location:     location,
-		StartTime:    startTime,
-		EndTime:      endTime,
-		Created:      now,
-		LastModified: now,
-	}
-}
