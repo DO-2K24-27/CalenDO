@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build-and-test-backend:
     runs-on: github-runner-do
     steps:
       - uses: actions/checkout@v4
@@ -32,9 +32,33 @@ jobs:
         run: |
           go install github.com/swaggo/swag/cmd/swag@latest
           swag init -g api/main.go -o docs
+  
+  build-and-test-frontend:
+    runs-on: github-runner-do
+    steps:
+      - uses: actions/checkout@v4
 
-  docker:
-    needs: [build-and-test]
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+
+  docker-backend:
+    needs: [build-and-test-backend]
     runs-on: github-runner-do
     permissions:
       contents: read
@@ -55,23 +79,60 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/calendo-api:latest
+            ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-backend:latest
 
-      - name: Keyless signing of Docker images
+      - name: Keyless signing of Backend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:${{ github.sha }}
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-api:latest
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+
+  docker-frontend:
+    needs: [build-and-test-frontend]
+    runs-on: github-runner-do
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.8.1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+
+      - name: Keyless signing of Frontend Docker image
+        run: |
+          export COSIGN_EXPERIMENTAL=1
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
 
   deploy:
-    needs: [docker]
+    needs: [docker-backend, docker-frontend]
     runs-on: github-runner-do
     steps:
       - uses: actions/checkout@v4
@@ -94,4 +155,7 @@ jobs:
             --set backend.image.repository=${{ vars.REGISTRY_URL }}/calendo-api \
             --set backend.image.tag=${{ github.sha }} \
             --set backend.image.pullPolicy=IfNotPresent \
+            --set frontend.image.repository=${{ vars.REGISTRY_URL }}/calendo-frontend \
+            --set frontend.image.tag=${{ github.sha }} \
+            --set frontend.image.pullPolicy=IfNotPresent \
             --namespace hugo-calendo --create-namespace
