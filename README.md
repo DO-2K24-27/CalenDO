@@ -1,16 +1,18 @@
 # CalenDO - Calendar Management System
 
-CalenDO is a complete calendar management system featuring a Go-based RESTful API backend with Kubernetes deployment capabilities.
+CalenDO is a complete calendar management system featuring a Go-based RESTful API backend and a React frontend with Kubernetes deployment capabilities.
 
 ## Project Structure
 
 - **backend/**: Go API for event management
+- **frontend/**: React-based UI for the calendar application
 - **helm/**: Kubernetes deployment configuration using Helm charts
 
 ## Features
 
 - Create, read, update, and delete calendar events
 - Event details include summary, description, location, start time, and end time
+- User-friendly React frontend interface
 - RESTful API endpoints for event management
 - API documentation with Swagger/OpenAPI
 - Kubernetes deployment support with scalable configuration
@@ -30,7 +32,8 @@ docker-compose up -d
 docker-compose up -d database
 ```
 
-The API will be available at `http://localhost:8080`.
+- The API will be available at `http://localhost:8080`
+- The frontend will be available at `http://localhost:3000`
 
 ### Accessing the API
 
@@ -86,17 +89,58 @@ make seed
 make test
 ```
 
+## Frontend Development
+
+The frontend is built with React, TypeScript, and Vite.
+
+### Prerequisites
+
+- Node.js 18 or higher
+- npm
+
+### Quick Commands
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
 ## Kubernetes Deployment
 
-For deploying to Kubernetes using Helm, see the [Helm README](./helm/README.md).
+For deploying to Kubernetes, use the provided Helm chart:
+
+### Prerequisites
+
+- Kubernetes cluster
+- Helm 3.x installed
+- Docker (for building images)
 
 ### Key Deployment Steps
 
-1. Configure your values in `helm/calendoapi/values.yaml`
-2. Deploy using:
    ```bash
-   helm install calendoapi ./helm/calendoapi --namespace <your-namespace> --create-namespace
+   # Build backend and frontend images
+   docker build -t calendoapi:latest ./backend
+   docker build -t calendofrontend:latest ./frontend
+   
+   # Deploy using Helm
+   helm install calendo ./helm --namespace <your-namespace> --create-namespace
    ```
+
+The Helm chart includes:
+
+- Backend API deployment with health checks and autoscaling capabilities
+- Frontend UI deployment with Nginx serving the React application
+- PostgreSQL database
+- Proper ingress configuration with TLS
 
 ## License
 

@@ -1,0 +1,19 @@
+{{- if .Values.frontend.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "calendo.frontend.fullname" . }}-frontend
+  labels:
+    {{- include "calendo.frontend.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "calendo.frontend.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+{{- end }}

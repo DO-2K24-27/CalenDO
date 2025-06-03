@@ -2,9 +2,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "calendoapi.fullname" . }}-backend
+  name: {{ include "calendo.backend.fullname" . }}-backend
   labels:
-    {{- include "calendoapi.labels" . | nindent 4 }}
+    {{- include "calendo.backend.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
 spec:
   {{- if not .Values.backend.autoscaling.enabled }}
@@ -12,7 +12,7 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "calendoapi.selectorLabels" . | nindent 6 }}
+      {{- include "calendo.backend.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: backend
   template:
     metadata:
@@ -21,14 +21,14 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "calendoapi.selectorLabels" . | nindent 8 }}
+        {{- include "calendo.backend.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: backend
     spec:
       {{- with .Values.backend.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "calendoapi.serviceAccountName" . }}
+      serviceAccountName: {{ include "calendo.backend.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
       containers:
@@ -53,17 +53,17 @@ spec:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendoapi.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
                   key: DB_USER
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendoapi.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
                   key: DB_PASSWORD
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendoapi.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
                   key: DB_NAME
           volumeMounts:
             - name: config-volume
@@ -95,7 +95,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ include "calendoapi.fullname" . }}-backend-config
+            name: {{ include "calendo.backend.fullname" . }}-backend-config
       {{- with .Values.backend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

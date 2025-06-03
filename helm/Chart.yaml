@@ -1,5 +1,5 @@
 apiVersion: v2
-name: calendoapi
+name: calendo
 description: A Helm chart for CalenDO application (API and frontend)
 type: application
 version: 0.1.0

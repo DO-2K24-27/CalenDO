@@ -11,16 +11,16 @@ Your release is named {{ .Release.Name }}.
      {{- end }}
    {{- end }}
    {{- else if contains "NodePort" .Values.backend.service.type }}
-     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendoapi.fullname" . }}-backend)
+     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.backend.fullname" . }}-backend)
      export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
      echo http://$NODE_IP:$NODE_PORT
    {{- else if contains "LoadBalancer" .Values.backend.service.type }}
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendoapi.fullname" . }}-backend'
-     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendoapi.fullname" . }}-backend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.backend.fullname" . }}-backend'
+     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.backend.fullname" . }}-backend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
      echo http://$SERVICE_IP:{{ .Values.backend.service.port }}
    {{- else if contains "ClusterIP" .Values.backend.service.type }}
-     export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "calendoapi.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=backend" -o jsonpath="{.items[0].metadata.name}")
+     export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "calendo.backend.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=backend" -o jsonpath="{.items[0].metadata.name}")
      export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
      echo "Visit http://127.0.0.1:8080 to use the backend API"
      kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
@@ -29,6 +29,27 @@ Your release is named {{ .Release.Name }}.
 
 {{- if .Values.frontend.enabled }}
 2. Frontend Application:
+   {{- if .Values.frontend.ingress.enabled }}
+   {{- range $host := .Values.frontend.ingress.hosts }}
+     {{- range .paths }}
+     http{{ if $.Values.frontend.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
+     {{- end }}
+   {{- end }}
+   {{- else if contains "NodePort" .Values.frontend.service.type }}
+     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.frontend.fullname" . }}-frontend)
+     export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+     echo http://$NODE_IP:$NODE_PORT
+   {{- else if contains "LoadBalancer" .Values.frontend.service.type }}
+     NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.frontend.fullname" . }}-frontend'
+     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.frontend.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+     echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
+   {{- else if contains "ClusterIP" .Values.frontend.service.type }}
+     export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "calendo.frontend.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=frontend" -o jsonpath="{.items[0].metadata.name}")
+     export CONTAINER_PORT=$(kubectl get pod --namespace {{ .Release.Namespace }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+     echo "Visit http://127.0.0.1:8080 to use the frontend application"
+     kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+   {{- end }}
    Frontend component is deployed but not yet configured. Frontend access details will be provided here when implemented.
 {{- end }}
 
