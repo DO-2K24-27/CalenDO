@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #6B46C1;
+  --primary-dark: #553C9A;
+  --primary-light: #805AD5;
+  --secondary: #9F7AEA;
+  --tertiary: #E9D8FD;
+  --background: #FAF5FF;
+  --foreground: #1A202C;
+  --surface: #FFFFFF;
+  --error: #E53E3E;
+  --success: #38A169;
+  --warning: #D69E2E;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+    'Helvetica Neue', Arial, sans-serif;
+  color: var(--foreground);
+  background-color: var(--background);
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.event-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-cell {
+  aspect-ratio: 1 / 1;
+  min-height: 100px;
+}
+
+@media (max-width: 768px) {
+  .calendar-cell {
+    min-height: 80px;
+  }
+}
+
+.search-highlight {
+  background-color: #FEF3C7;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
