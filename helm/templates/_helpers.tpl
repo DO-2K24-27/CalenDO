@@ -88,7 +88,7 @@ Create the name of the service account to use for backend
 {{- if .Values.backend.serviceAccount.create }}
 {{- default (include "calendo.backend.fullname" .) .Values.backend.serviceAccount.name }}
 {{- else }}
-{{- default "default-backend" .Values.backend.serviceAccount.name }}
+{{- default "default" .Values.backend.serviceAccount.name }}
 {{- end }}
 {{- end }}
 
@@ -99,6 +99,6 @@ Create the name of the service account to use for frontend
 {{- if .Values.frontend.serviceAccount.create }}
 {{- default (include "calendo.frontend.fullname" .) .Values.frontend.serviceAccount.name }}
 {{- else }}
-{{- default "default-frontend" .Values.frontend.serviceAccount.name }}
+{{- default "default" .Values.frontend.serviceAccount.name }}
 {{- end }}
 {{- end }}
