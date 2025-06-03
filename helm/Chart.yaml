@@ -8,6 +8,6 @@ maintainers:
   - name: CalenDO Team
 dependencies:
   - name: postgresql
-    version: 12.6.5
+    version: 16.5.0
     repository: https://charts.bitnami.com/bitnami
     condition: postgresql.enabled
