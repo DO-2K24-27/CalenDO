@@ -112,20 +112,10 @@ backend:
 
   affinity: {}
 
-  # Application specific configuration
   env:
-    # General settings
     PORT: "8080"
     ENVIRONMENT: "production"
-    
-    # Database settings
-    DB_HOST: "calendoapi-postgresql"
-    DB_PORT: "5432"
-    DB_USER: "postgres"
-    DB_PASSWORD: "postgres"
-    DB_NAME: "calendo"
 
-  # ConfigMap data
   configMapData:
     config.yaml: |
       port: 8080
@@ -134,11 +124,11 @@ backend:
       # Database configuration
       database:
         driver: postgres
-        host: ${DB_HOST}
-        port: ${DB_PORT}
-        username: ${DB_USER}
-        password: ${DB_PASSWORD}
-        dbname: ${DB_NAME}
+        host: calendoapi-postgresql
+        port: 5432
+        username: postgres
+        password: postgres
+        dbname: calendo
         sslmode: disable
         max_open_conns: 25
         max_idle_conns: 5
