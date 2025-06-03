@@ -66,24 +66,28 @@ export const addDays = (date: Date, days: number): Date => {
   return newDate;
 };
 
-export const findNextBreak = (events: Event[]): Event | null => {
+export const findNextBreak = (events: Event[]): Date | null => {
   if (!events || events.length === 0) return null;
   
   const now = new Date();
-  const breakEvents = events.filter(event => 
-    event.summary.toLowerCase().includes('break') && 
-    new Date(event.start_time) > now
+  
+  // First, check if we're currently in an event (event started but hasn't ended yet)
+  const currentEvent = events.find(event => 
+    new Date(event.start_time) <= now && new Date(event.end_time) > now
   );
   
-  if (breakEvents.length === 0) return null;
+  if (currentEvent) {
+    // If we're in an event, the next break starts when this event ends
+    return new Date(currentEvent.end_time);
+  }
   
-  return breakEvents.sort(
-    (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-  )[0];
+  // If we're not in an event, we're already in a break
+  // No need to find the next break
+  return null;
 };
 
-export const getTimeUntil = (dateString: string): { days: number; hours: number; minutes: number; seconds: number } => {
-  const targetDate = new Date(dateString);
+export const getTimeUntil = (target: string | Date): { days: number; hours: number; minutes: number; seconds: number } => {
+  const targetDate = typeof target === 'string' ? new Date(target) : target;
   const now = new Date();
   
   const diffMs = targetDate.getTime() - now.getTime();

@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Event } from '../../types';
 import { getTimeUntil } from '../../utils/dateUtils';
 
 interface CountdownTimerProps {
-  event: Event | null;
+  breakDate: Date | null;
 }
 
-const CountdownTimer: React.FC<CountdownTimerProps> = ({ event }) => {
+const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   
   useEffect(() => {
-    if (!event) return;
+    if (!breakDate) return;
     
     const updateTimer = () => {
-      setTimeLeft(getTimeUntil(event.start_time));
+      setTimeLeft(getTimeUntil(breakDate));
     };
     
     // Initial update
@@ -23,12 +22,12 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ event }) => {
     const timerId = setInterval(updateTimer, 1000);
     
     return () => clearInterval(timerId);
-  }, [event]);
+  }, [breakDate]);
   
-  if (!event) {
+  if (!breakDate) {
     return (
       <div className="text-center p-8">
-        <h2 className="text-3xl font-bold text-gray-400">No upcoming breaks</h2>
+        <h2 className="text-3xl font-bold text-gray-400">You're currently in a break!</h2>
       </div>
     );
   }

@@ -14,7 +14,7 @@ const CountdownPage: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const navigate = useNavigate();
   
-  const nextBreakEvent = events ? findNextBreak(events) : null;
+  const nextBreakDate = events ? findNextBreak(events) : null;
   
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -78,8 +78,8 @@ const CountdownPage: React.FC = () => {
           <ErrorDisplay message={error} onRetry={refreshEvents} />
         ) : (
           <>
-            <CountdownTimer event={nextBreakEvent} />
-            <CountdownDetails event={nextBreakEvent} />
+            <CountdownTimer breakDate={nextBreakDate} />
+            <CountdownDetails breakDate={nextBreakDate} />
           </>
         )}
       </div>
