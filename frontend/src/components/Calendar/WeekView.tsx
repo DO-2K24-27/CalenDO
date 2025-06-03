@@ -2,6 +2,7 @@ import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { getDaysInWeek, isSameDay, formatShortDate } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
+import { calculateEventPositions, calculateEventHeight, calculateEventTop } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
 
 const WeekView: React.FC = () => {
@@ -10,6 +11,8 @@ const WeekView: React.FC = () => {
   const filteredEvents = filterEvents(events, searchFilters);
   const weekDays = getDaysInWeek(currentDate);
   const today = new Date();
+  
+  const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -25,15 +28,17 @@ const WeekView: React.FC = () => {
         ))}
       </div>
       
-      <div className="grid grid-cols-8 divide-x divide-gray-200">
-        <div className="space-y-2 pr-2 pt-4">
+      <div className="grid grid-cols-8 divide-x divide-gray-200 relative">
+        {/* Time column */}
+        <div className="space-y-0">
           {Array.from({ length: 24 }).map((_, hour) => (
-            <div key={hour} className="text-xs text-gray-500 h-20 text-right pr-1">
+            <div key={hour} className="text-xs text-gray-500 text-right pr-2 border-t border-gray-100 first:border-t-0 flex items-start pt-1" style={{ height: `${HOUR_HEIGHT}px` }}>
               {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
             </div>
           ))}
         </div>
         
+        {/* Day columns */}
         {weekDays.map((day, dayIndex) => {
           // Get events for this day
           const dayEvents = filteredEvents.filter(event => {
@@ -51,26 +56,30 @@ const WeekView: React.FC = () => {
               key={dayIndex} 
               className={`relative ${isSameDay(day, today) ? 'bg-purple-50' : ''}`}
             >
+              {/* Hour grid for this day */}
               {Array.from({ length: 24 }).map((_, hour) => (
-                <div key={hour} className="h-20 border-t border-gray-100 first:border-t-0"></div>
+                <div key={hour} className="border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}></div>
               ))}
               
-              {dayEvents.map(event => {
-                const startTime = new Date(event.start_time);
-                const endTime = new Date(event.end_time);
+              {/* Events for this day */}
+              {calculateEventPositions(dayEvents).map(event => {
+                const top = calculateEventTop(event.start_time, HOUR_HEIGHT);
+                const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 
-                const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-                const endHour = endTime.getHours() + endTime.getMinutes() / 60;
-                const duration = endHour - startHour;
-                
-                const top = `${startHour * 20}px`;
-                const height = `${duration * 20}px`;
+                const width = 100 / event.totalColumns;
+                const left = (width * event.column);
                 
                 return (
                   <div
                     key={event.uid}
-                    style={{ top, height, minHeight: '20px' }}
-                    className="absolute left-0 right-0 mx-1 overflow-hidden"
+                    style={{ 
+                      top: `${top}px`, 
+                      height: `${height}px`, 
+                      left: `${left}%`,
+                      width: `${width}%`,
+                      minHeight: '20px' 
+                    }}
+                    className="absolute overflow-hidden pr-1"
                   >
                     <EventCard 
                       event={event} 

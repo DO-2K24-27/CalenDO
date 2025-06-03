@@ -72,3 +72,37 @@ h1, h2, h3, h4, h5, h6 {
   from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* Calendar-specific styles */
+.calendar-grid {
+  position: relative;
+}
+
+.time-slot {
+  position: relative;
+}
+
+.time-slot::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, rgba(156, 163, 175, 0.3) 0%, rgba(156, 163, 175, 0.1) 100%);
+}
+
+.event-card.compact {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.event-card.compact:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Smooth scrolling for calendar views */
+.calendar-view {
+  scroll-behavior: smooth;
+}

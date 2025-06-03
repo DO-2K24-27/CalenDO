@@ -25,10 +25,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
     return (
       <div
         onClick={onClick}
-        className={`event-card text-xs p-1 rounded mb-1 cursor-pointer border-l-2 truncate ${bgColor} ${textColor}`}
+        className={`event-card text-xs p-1 rounded cursor-pointer border-l-2 h-full flex flex-col justify-start overflow-hidden ${bgColor} ${textColor}`}
       >
-        <div className="font-medium truncate">
+        <div className="font-medium truncate leading-tight">
           {highlightText(event.summary, keyword)}
+        </div>
+        <div className="text-xs opacity-75 truncate leading-tight">
+          {startTime}
         </div>
       </div>
     );
