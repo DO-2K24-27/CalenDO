@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Event, CalendarViewType, SearchFilters } from '../types';
 import { api } from '../services/api';
 
@@ -71,6 +71,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCalendar = () => {
   const context = useContext(CalendarContext);
   if (context === undefined) {

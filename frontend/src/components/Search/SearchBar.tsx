@@ -13,7 +13,7 @@ const SearchBar: React.FC = () => {
     }, 300);
     
     return () => clearTimeout(timerId);
-  }, [localKeyword]);
+  }, [localKeyword, searchFilters, setSearchFilters]);
   
   const handleFieldChange = (field: SearchFilters['field']) => {
     setSearchFilters({ ...searchFilters, field });

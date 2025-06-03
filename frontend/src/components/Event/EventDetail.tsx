@@ -10,7 +10,6 @@ interface EventDetailProps {
 
 const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
   const startDate = new Date(event.start_time);
-  const endDate = new Date(event.end_time);
   
   const isBreak = event.summary.toLowerCase().includes('break');
   const headerBgColor = isBreak ? 'bg-green-600' : 'bg-purple-600';

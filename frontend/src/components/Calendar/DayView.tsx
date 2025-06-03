@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { isSameDay, formatTime } from '../../utils/dateUtils';
+import { isSameDay } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import EventCard from '../Event/EventCard';
 

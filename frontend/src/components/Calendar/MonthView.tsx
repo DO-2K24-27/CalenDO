@@ -3,12 +3,10 @@ import { useCalendar } from '../../contexts/CalendarContext';
 import { 
   getDaysInMonth, 
   getFirstDayOfMonth, 
-  isSameDay, 
-  formatShortDate 
+  isSameDay 
 } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import EventCard from '../Event/EventCard';
-import { Event } from '../../types';
 
 const MonthView: React.FC = () => {
   const { 

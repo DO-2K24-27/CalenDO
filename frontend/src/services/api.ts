@@ -1,4 +1,4 @@
-import { Event, EventInput } from '../types';
+import { Event } from '../types';
 
 const API_BASE_URL = '/api';
 

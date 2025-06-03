@@ -1,11 +1,10 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Calendar, Clock } from 'lucide-react';
 import { useCalendar } from '../../contexts/CalendarContext';
 
 const Header: React.FC = () => {
   const { view, setView } = useCalendar();
-  const location = useLocation();
   
   return (
     <header className="bg-purple-700 text-white shadow-md">
