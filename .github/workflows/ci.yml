@@ -158,4 +158,5 @@ jobs:
             --set frontend.image.repository=${{ vars.REGISTRY_URL }}/calendo-frontend \
             --set frontend.image.tag=${{ github.sha }} \
             --set frontend.image.pullPolicy=IfNotPresent \
-            --namespace hugo-calendo --create-namespace
+            --namespace hugo-calendo --create-namespace \
+            --wait --timeout 15m
