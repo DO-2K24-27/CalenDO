@@ -88,16 +88,19 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   const refreshPlannings = React.useCallback(async () => {
     try {
       const data = await api.getPlannings();
-      setPlannings(data);
+      // Ensure we always have an array, even if API returns null
+      setPlannings(Array.isArray(data) ? data : []);
       
       // Only initialize selected plannings on first load if none are selected
       // and don't force selection - let user choose to see all events or select specific plannings
-      if (selectedPlannings.length === 0 && data.length > 0) {
+      if (selectedPlannings.length === 0 && Array.isArray(data) && data.length > 0) {
         // Start with all events visible (no planning selected)
         // User can then choose to filter by specific plannings
       }
     } catch (err) {
       console.error('Failed to fetch plannings:', err);
+      // Set empty array on error to ensure consistent state
+      setPlannings([]);
     }
   }, [selectedPlannings.length]);
 
@@ -106,10 +109,13 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try {
       const data = await api.getEvents();
-      setEvents(data);
+      // Ensure we always have an array, even if API returns null
+      setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
       setError('Failed to fetch events. Please try again later.');
       console.error(err);
+      // Set empty array on error to ensure consistent state
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }

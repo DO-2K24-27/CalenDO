@@ -8,10 +8,12 @@ import EventDetail from '../components/Event/EventDetail';
 import SearchBar from '../components/Search/SearchBar';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 import ErrorDisplay from '../components/UI/ErrorDisplay';
+import EmptyState from '../components/UI/EmptyState';
 import { filterEvents } from '../utils/searchUtils';
 
 const CalendarPage: React.FC = () => {
   const { 
+    events,
     filteredEvents, 
     isLoading, 
     error, 
@@ -25,6 +27,8 @@ const CalendarPage: React.FC = () => {
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   const hasSearchResults = searchFilters.keyword !== '' && searchFilteredEvents.length > 0;
   const noSearchResults = searchFilters.keyword !== '' && searchFilteredEvents.length === 0;
+  const hasNoEvents = events.length === 0;
+  const isSearchActive = searchFilters.keyword !== '';
   
   return (
     <div className="container mx-auto px-4 py-4">
@@ -52,6 +56,18 @@ const CalendarPage: React.FC = () => {
         <LoadingSpinner size="large" />
       ) : error ? (
         <ErrorDisplay message={error} onRetry={refreshEvents} />
+      ) : hasNoEvents && !isSearchActive ? (
+        <EmptyState
+          title="No Events Yet"
+          description="You haven't created any events yet. Start by adding your first event to get organized!"
+          action={{
+            label: "Create Event",
+            onClick: () => {
+              // This could be enhanced to open a create event modal or navigate to create page
+              console.log('Create event action triggered');
+            }
+          }}
+        />
       ) : (
         <div className="mb-4">
           {view === 'month' && <MonthView />}
