@@ -33,8 +33,14 @@ func main() {
 	}
 	defer database.Close()
 
-	// Initialize event repository and auto-migrate the Event model
+	// Initialize repositories
 	eventRepo := repository.NewEventRepository()
+	planningRepo := repository.NewPlanningRepository()
+
+	// Auto-migrate database tables
+	if err := planningRepo.InitTable(); err != nil {
+		log.Fatalf("Failed to initialize planning table: %v", err)
+	}
 	if err := eventRepo.InitTable(); err != nil {
 		log.Fatalf("Failed to initialize event table: %v", err)
 	}
@@ -42,8 +48,9 @@ func main() {
 	// Create a new router
 	r := mux.NewRouter()
 
-	// Register routes with event repository
+	// Register routes with repositories
 	handlers.InitializeHandlers(eventRepo)
+	handlers.InitializePlanningHandlers(planningRepo)
 	handlers.RegisterRoutes(r)
 
 	// Serve the Swagger JSON file directly

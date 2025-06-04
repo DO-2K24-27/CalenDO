@@ -8,7 +8,6 @@ import (
 	"github.com/do2024-2047/CalenDO/internal/database"
 	"github.com/do2024-2047/CalenDO/internal/models"
 	"github.com/do2024-2047/CalenDO/internal/repository"
-	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -22,56 +21,155 @@ func main() {
 	}
 	defer database.Close()
 
-	// Create repository and initialize table
+	// Initialize repositories for table migration only
+	planningRepo := repository.NewPlanningRepository()
 	eventRepo := repository.NewEventRepository()
+
+	// Auto-migrate database tables
+	if err := planningRepo.InitTable(); err != nil {
+		log.Fatalf("Failed to initialize planning table: %v", err)
+	}
 	if err := eventRepo.InitTable(); err != nil {
 		log.Fatalf("Failed to initialize event table: %v", err)
 	}
 
-	// Create sample events
-	events := []models.Event{
+	// Create default planning using direct database insert
+	defaultPlanning := &models.Planning{
+		ID:          "default-planning",
+		Name:        "My Calendar",
+		Description: "Default calendar planning",
+		Color:       "#3B82F6",
+		IsDefault:   true,
+	}
+
+	if err := database.DB.Create(defaultPlanning).Error; err != nil {
+		log.Printf("Failed to create default planning (may already exist): %v", err)
+	} else {
+		log.Println("Created default planning")
+	}
+
+	// Create work planning using direct database insert
+	workPlanning := &models.Planning{
+		ID:          "work-planning",
+		Name:        "Work Schedule",
+		Description: "Work-related events and meetings",
+		Color:       "#EF4444",
+		IsDefault:   false,
+	}
+
+	if err := database.DB.Create(workPlanning).Error; err != nil {
+		log.Printf("Failed to create work planning (may already exist): %v", err)
+	} else {
+		log.Println("Created work planning")
+	}
+
+	// Create personal planning using direct database insert
+	personalPlanning := &models.Planning{
+		ID:          "personal-planning",
+		Name:        "Personal",
+		Description: "Personal events and activities",
+		Color:       "#10B981",
+		IsDefault:   false,
+	}
+
+	if err := database.DB.Create(personalPlanning).Error; err != nil {
+		log.Printf("Failed to create personal planning (may already exist): %v", err)
+	} else {
+		log.Println("Created personal planning")
+	}
+
+	// Create sample events using direct database inserts
+	now := time.Now()
+
+	// Default planning events
+	defaultEvents := []*models.Event{
 		{
-			UID:          uuid.New().String(),
+			UID:          "sample-event-1",
+			PlanningID:   "default-planning",
 			Summary:      "Team Meeting",
-			Description:  "Weekly team sync",
+			Description:  "Weekly team sync meeting",
 			Location:     "Conference Room A",
-			StartTime:    time.Now().Add(24 * time.Hour),
-			EndTime:      time.Now().Add(25 * time.Hour),
-			Created:      time.Now(),
-			LastModified: time.Now(),
+			StartTime:    now.Add(24 * time.Hour),
+			EndTime:      now.Add(24*time.Hour + time.Hour),
+			Created:      now,
+			LastModified: now,
 		},
 		{
-			UID:          uuid.New().String(),
-			Summary:      "Client Presentation",
-			Description:  "Present the new features to the client",
-			Location:     "Main Board Room",
-			StartTime:    time.Now().Add(48 * time.Hour),
-			EndTime:      time.Now().Add(50 * time.Hour),
-			Created:      time.Now(),
-			LastModified: time.Now(),
-		},
-		{
-			UID:          uuid.New().String(),
-			Summary:      "Product Launch",
-			Description:  "Launch the new product version",
-			Location:     "Online - Zoom",
-			StartTime:    time.Now().Add(72 * time.Hour),
-			EndTime:      time.Now().Add(74 * time.Hour),
-			Created:      time.Now(),
-			LastModified: time.Now(),
+			UID:          "sample-event-2",
+			PlanningID:   "default-planning",
+			Summary:      "Doctor Appointment",
+			Description:  "Annual checkup",
+			Location:     "Medical Center",
+			StartTime:    now.Add(48 * time.Hour),
+			EndTime:      now.Add(48*time.Hour + 30*time.Minute),
+			Created:      now,
+			LastModified: now,
 		},
 	}
 
-	// Insert events directly into the database
-	for i := range events {
-		if err := database.DB.Create(&events[i]).Error; err != nil {
-			log.Printf("Failed to create event %s: %v", events[i].Summary, err)
+	// Work planning events
+	workEvents := []*models.Event{
+		{
+			UID:          "work-event-1",
+			PlanningID:   "work-planning",
+			Summary:      "Project Review",
+			Description:  "Quarterly project review meeting",
+			Location:     "Boardroom",
+			StartTime:    now.Add(72 * time.Hour),
+			EndTime:      now.Add(72*time.Hour + 2*time.Hour),
+			Created:      now,
+			LastModified: now,
+		},
+		{
+			UID:          "work-event-2",
+			PlanningID:   "work-planning",
+			Summary:      "Client Presentation",
+			Description:  "Presenting project results to client",
+			Location:     "Client Office",
+			StartTime:    now.Add(96 * time.Hour),
+			EndTime:      now.Add(96*time.Hour + 90*time.Minute),
+			Created:      now,
+			LastModified: now,
+		},
+	}
+
+	// Personal planning events
+	personalEvents := []*models.Event{
+		{
+			UID:          "personal-event-1",
+			PlanningID:   "personal-planning",
+			Summary:      "Gym Session",
+			Description:  "Weekly workout routine",
+			Location:     "Local Gym",
+			StartTime:    now.Add(12 * time.Hour),
+			EndTime:      now.Add(12*time.Hour + 90*time.Minute),
+			Created:      now,
+			LastModified: now,
+		},
+		{
+			UID:          "personal-event-2",
+			PlanningID:   "personal-planning",
+			Summary:      "Dinner with Friends",
+			Description:  "Monthly dinner gathering",
+			Location:     "Italian Restaurant",
+			StartTime:    now.Add(120 * time.Hour),
+			EndTime:      now.Add(120*time.Hour + 3*time.Hour),
+			Created:      now,
+			LastModified: now,
+		},
+	}
+
+	// Seed all events using direct database inserts
+	allEvents := append(append(defaultEvents, workEvents...), personalEvents...)
+	for _, event := range allEvents {
+		if err := database.DB.Create(event).Error; err != nil {
+			log.Printf("Failed to create event %s (may already exist): %v", event.Summary, err)
 		} else {
-			log.Printf("Created event: %s with UID: %s", events[i].Summary, events[i].UID)
+			log.Printf("Created event: %s", event.Summary)
 		}
 	}
 
-	log.Println("Seeding completed successfully")
+	log.Println("Database seeding completed successfully!")
 }
 
 // initConfig reads in config file and ENV variables if set

@@ -23,8 +23,16 @@ func InitializeHandlers(er *repository.EventRepository) {
 // RegisterRoutes sets up all API routes
 func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/health", HealthCheckHandler).Methods("GET")
+
+	r.HandleFunc("/api/plannings", GetPlanningsHandler).Methods("GET")
+	r.HandleFunc("/api/plannings/default", GetDefaultPlanningHandler).Methods("GET")
+	r.HandleFunc("/api/plannings/{id}", GetPlanningHandler).Methods("GET")
+
 	r.HandleFunc("/api/events", GetEventsHandler).Methods("GET")
 	r.HandleFunc("/api/events/{uid}", GetEventHandler).Methods("GET")
+
+	r.HandleFunc("/api/plannings/{id}/events", GetPlanningEventsHandler).Methods("GET")
+	r.HandleFunc("/api/plannings/{planningId}/events/{uid}", GetPlanningEventHandler).Methods("GET")
 }
 
 // HealthCheckHandler godoc
@@ -85,6 +93,67 @@ func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	eventUID := vars["uid"]
 
 	event, err := eventRepo.FindByID(eventUID)
+	if err == repository.ErrNotFound {
+		http.Error(w, "Event not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(event.ToResponse())
+}
+
+// GetPlanningEventsHandler godoc
+// @Summary Get events for a specific planning
+// @Description Retrieve all events for a specific planning
+// @Tags events
+// @Produce json
+// @Param id path string true "Planning ID"
+// @Success 200 {array} models.EventResponse
+// @Failure 400 {object} string "Bad request"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/plannings/{id}/events [get]
+func GetPlanningEventsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	planningID := vars["id"]
+
+	events, err := eventRepo.FindByPlanningID(planningID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to response format
+	var responses []models.EventResponse
+	for _, event := range events {
+		responses = append(responses, event.ToResponse())
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(responses)
+}
+
+// GetPlanningEventHandler godoc
+// @Summary Get a specific event from a planning
+// @Description Get a calendar event by its UID from a specific planning
+// @Tags events
+// @Produce json
+// @Param planningId path string true "Planning ID"
+// @Param uid path string true "Event UID"
+// @Success 200 {object} models.EventResponse
+// @Failure 404 {object} string "Event not found"
+// @Failure 500 {object} string "Internal server error"
+// @Router /api/plannings/{planningId}/events/{uid} [get]
+func GetPlanningEventHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	planningID := vars["planningId"]
+	eventUID := vars["uid"]
+
+	event, err := eventRepo.FindByIDAndPlanningID(eventUID, planningID)
 	if err == repository.ErrNotFound {
 		http.Error(w, "Event not found", http.StatusNotFound)
 		return

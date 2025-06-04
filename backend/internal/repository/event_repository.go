@@ -27,7 +27,22 @@ func NewEventRepository() *EventRepository {
 func (r *EventRepository) FindAll() ([]*models.Event, error) {
 	var events []*models.Event
 
-	result := database.DB.Order("start_time DESC").Find(&events)
+	result := database.DB.Preload("Planning").Order("start_time DESC").Find(&events)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return events, nil
+}
+
+// FindByPlanningID returns all events for a specific planning
+func (r *EventRepository) FindByPlanningID(planningID string) ([]*models.Event, error) {
+	if planningID == "" {
+		return nil, ErrInvalidID
+	}
+
+	var events []*models.Event
+	result := database.DB.Preload("Planning").Where("planning_id = ?", planningID).Order("start_time DESC").Find(&events)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -42,7 +57,7 @@ func (r *EventRepository) FindByID(uid string) (*models.Event, error) {
 	}
 
 	var event models.Event
-	result := database.DB.Where("uid = ?", uid).First(&event)
+	result := database.DB.Preload("Planning").Where("uid = ?", uid).First(&event)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -54,7 +69,26 @@ func (r *EventRepository) FindByID(uid string) (*models.Event, error) {
 	return &event, nil
 }
 
-// InitTable initializes the calendar table if it doesn't exist
+// FindByIDAndPlanningID returns an event by its ID and planning ID
+func (r *EventRepository) FindByIDAndPlanningID(uid, planningID string) (*models.Event, error) {
+	if uid == "" || planningID == "" {
+		return nil, ErrInvalidID
+	}
+
+	var event models.Event
+	result := database.DB.Preload("Planning").Where("uid = ? AND planning_id = ?", uid, planningID).First(&event)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrNotFound
+		}
+		return nil, result.Error
+	}
+
+	return &event, nil
+}
+
+// InitTable initializes the events table if it doesn't exist
 func (r *EventRepository) InitTable() error {
 	return database.DB.AutoMigrate(&models.Event{})
 }
