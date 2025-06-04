@@ -59,14 +59,7 @@ const CalendarPage: React.FC = () => {
       ) : hasNoEvents && !isSearchActive ? (
         <EmptyState
           title="No Events Yet"
-          description="You haven't created any events yet. Start by adding your first event to get organized!"
-          action={{
-            label: "Create Event",
-            onClick: () => {
-              // This could be enhanced to open a create event modal or navigate to create page
-              console.log('Create event action triggered');
-            }
-          }}
+          description="You haven't created any events yet."
         />
       ) : (
         <div className="mb-4">
