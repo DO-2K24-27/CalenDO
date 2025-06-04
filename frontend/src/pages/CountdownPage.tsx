@@ -42,11 +42,25 @@ const CountdownPage: React.FC = () => {
     };
   }, []);
   
+  const handleBackToCalendar = () => {
+    // Exit fullscreen if currently in fullscreen mode
+    if (document.fullscreenElement) {
+      document.exitFullscreen().then(() => {
+        navigate('/');
+      }).catch(() => {
+        // If exiting fullscreen fails, still navigate
+        navigate('/');
+      });
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-purple-50 flex flex-col">
       <div className="flex items-center justify-between p-4">
         <button
-          onClick={() => navigate('/')}
+          onClick={handleBackToCalendar}
           className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
         >
           <ArrowLeft size={20} className="mr-1" />
