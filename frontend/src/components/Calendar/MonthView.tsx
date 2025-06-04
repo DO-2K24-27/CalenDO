@@ -10,13 +10,13 @@ import EventCard from '../Event/EventCard';
 
 const MonthView: React.FC = () => {
   const { 
-    events, 
+    filteredEvents, 
     currentDate,
     setSelectedEvent,
     searchFilters
   } = useCalendar();
 
-  const filteredEvents = filterEvents(events, searchFilters);
+  const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -46,7 +46,7 @@ const MonthView: React.FC = () => {
       const isToday = isSameDay(date, today);
       
       // Get events for this day
-      const dayEvents = filteredEvents.filter(event => {
+      const dayEvents = searchFilteredEvents.filter(event => {
         const eventStart = new Date(event.start_time);
         return isSameDay(eventStart, date);
       });

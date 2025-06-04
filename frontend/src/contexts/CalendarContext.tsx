@@ -1,9 +1,13 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Event, CalendarViewType, SearchFilters } from '../types';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Event, Planning, CalendarViewType, SearchFilters } from '../types';
 import { api } from '../services/api';
 
 interface CalendarContextType {
   events: Event[];
+  filteredEvents: Event[];
+  plannings: Planning[];
+  selectedPlannings: Planning[];
+  currentPlanning: Planning | null; // Keep for backward compatibility
   isLoading: boolean;
   error: string | null;
   currentDate: Date;
@@ -14,13 +18,22 @@ interface CalendarContextType {
   setView: (view: CalendarViewType) => void;
   setSelectedEvent: (event: Event | null) => void;
   setSearchFilters: (filters: SearchFilters) => void;
+  setCurrentPlanning: (planning: Planning | null) => void; // Keep for backward compatibility
+  setSelectedPlannings: (plannings: Planning[]) => void;
+  togglePlanningSelection: (planning: Planning) => void;
+  selectAllPlannings: () => void;
+  clearPlanningSelection: () => void;
   refreshEvents: () => Promise<void>;
+  refreshPlannings: () => Promise<void>;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [plannings, setPlannings] = useState<Planning[]>([]);
+  const [selectedPlannings, setSelectedPlannings] = useState<Planning[]>([]);
+  const [currentPlanning, setCurrentPlanning] = useState<Planning | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -31,7 +44,64 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     field: 'all'
   });
 
-  const refreshEvents = async () => {
+  const togglePlanningSelection = (planning: Planning) => {
+    setSelectedPlannings(prev => {
+      const isSelected = prev.some(p => p.id === planning.id);
+      const newSelection = isSelected 
+        ? prev.filter(p => p.id !== planning.id)
+        : [...prev, planning];
+      
+      // Update currentPlanning for backward compatibility
+      if (newSelection.length === 0) {
+        setCurrentPlanning(null);
+      } else if (newSelection.length === 1) {
+        setCurrentPlanning(newSelection[0]);
+      } else {
+        // Multiple selections - keep the first one as current for backward compatibility
+        setCurrentPlanning(newSelection[0]);
+      }
+      
+      return newSelection;
+    });
+  };
+
+  const selectAllPlannings = () => {
+    setSelectedPlannings([...plannings]);
+    setCurrentPlanning(plannings.length > 0 ? plannings[0] : null);
+  };
+
+  const clearPlanningSelection = () => {
+    setSelectedPlannings([]);
+    setCurrentPlanning(null);
+  };
+
+  // Keep backward compatibility with currentPlanning
+  const handleSetCurrentPlanning = (planning: Planning | null) => {
+    setCurrentPlanning(planning);
+    if (planning) {
+      setSelectedPlannings([planning]);
+    } else {
+      setSelectedPlannings([]);
+    }
+  };
+
+  const refreshPlannings = React.useCallback(async () => {
+    try {
+      const data = await api.getPlannings();
+      setPlannings(data);
+      
+      // Only initialize selected plannings on first load if none are selected
+      // and don't force selection - let user choose to see all events or select specific plannings
+      if (selectedPlannings.length === 0 && data.length > 0) {
+        // Start with all events visible (no planning selected)
+        // User can then choose to filter by specific plannings
+      }
+    } catch (err) {
+      console.error('Failed to fetch plannings:', err);
+    }
+  }, [selectedPlannings.length]);
+
+  const refreshEvents = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -43,14 +113,29 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    refreshEvents();
-  }, []);
+    const initializeData = async () => {
+      await Promise.all([refreshPlannings(), refreshEvents()]);
+    };
+    initializeData();
+  }, [refreshPlannings, refreshEvents]);
+
+  // Filter events based on selected plannings
+  const filteredEvents = React.useMemo(() => {
+    // If no plannings are selected, show all events
+    if (selectedPlannings.length === 0) return events;
+    const selectedPlanningIds = selectedPlannings.map(p => p.id);
+    return events.filter(event => selectedPlanningIds.includes(event.planning_id));
+  }, [events, selectedPlannings]);
 
   const value = {
     events,
+    filteredEvents,
+    plannings,
+    selectedPlannings,
+    currentPlanning,
     isLoading,
     error,
     currentDate,
@@ -61,7 +146,13 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     setView,
     setSelectedEvent,
     setSearchFilters,
-    refreshEvents
+    setCurrentPlanning: handleSetCurrentPlanning,
+    setSelectedPlannings,
+    togglePlanningSelection,
+    selectAllPlannings,
+    clearPlanningSelection,
+    refreshEvents,
+    refreshPlannings
   };
 
   return (

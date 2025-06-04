@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock } from 'lucide-react';
 import { useCalendar } from '../../contexts/CalendarContext';
+import { PlanningMultiSelector } from '../Planning/PlanningMultiSelector';
 
 const Header: React.FC = () => {
   const { view, setView } = useCalendar();
@@ -53,31 +54,37 @@ const Header: React.FC = () => {
           </div>
         </div>
         
-        <div className="md:hidden pb-3 flex space-x-2">
-          <button
-            onClick={() => setView('month')}
-            className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
-              view === 'month' ? 'bg-purple-800' : 'hover:bg-purple-600'
-            }`}
-          >
-            Month
-          </button>
-          <button
-            onClick={() => setView('week')}
-            className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
-              view === 'week' ? 'bg-purple-800' : 'hover:bg-purple-600'
-            }`}
-          >
-            Week
-          </button>
-          <button
-            onClick={() => setView('day')}
-            className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
-              view === 'day' ? 'bg-purple-800' : 'hover:bg-purple-600'
-            }`}
-          >
-            Day
-          </button>
+        {/* Planning Selector Row */}
+        <div className="border-t border-purple-600 pt-3 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <PlanningMultiSelector />
+            <div className="flex space-x-2 sm:hidden">
+              <button
+                onClick={() => setView('month')}
+                className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
+                  view === 'month' ? 'bg-purple-800' : 'hover:bg-purple-600'
+                }`}
+              >
+                Month
+              </button>
+              <button
+                onClick={() => setView('week')}
+                className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
+                  view === 'week' ? 'bg-purple-800' : 'hover:bg-purple-600'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => setView('day')}
+                className={`flex-1 px-2 py-1 rounded-md text-sm transition-colors ${
+                  view === 'day' ? 'bg-purple-800' : 'hover:bg-purple-600'
+                }`}
+              >
+                Day
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>

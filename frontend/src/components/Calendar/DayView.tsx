@@ -7,12 +7,12 @@ import EventCard from '../Event/EventCard';
 import CurrentTimeCursor from './CurrentTimeCursor';
 
 const DayView: React.FC = () => {
-  const { events, currentDate, setSelectedEvent, searchFilters } = useCalendar();
+  const { filteredEvents, currentDate, setSelectedEvent, searchFilters } = useCalendar();
   
-  const filteredEvents = filterEvents(events, searchFilters);
+  const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
   // Get events for the current day
-  const dayEvents = filteredEvents.filter(event => {
+  const dayEvents = searchFilteredEvents.filter(event => {
     const eventStart = new Date(event.start_time);
     return isSameDay(eventStart, currentDate);
   });

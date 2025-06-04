@@ -12,7 +12,7 @@ import { filterEvents } from '../utils/searchUtils';
 
 const CalendarPage: React.FC = () => {
   const { 
-    events, 
+    filteredEvents, 
     isLoading, 
     error, 
     view, 
@@ -22,9 +22,9 @@ const CalendarPage: React.FC = () => {
     searchFilters
   } = useCalendar();
   
-  const filteredEvents = filterEvents(events, searchFilters);
-  const hasSearchResults = searchFilters.keyword !== '' && filteredEvents.length > 0;
-  const noSearchResults = searchFilters.keyword !== '' && filteredEvents.length === 0;
+  const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
+  const hasSearchResults = searchFilters.keyword !== '' && searchFilteredEvents.length > 0;
+  const noSearchResults = searchFilters.keyword !== '' && searchFilteredEvents.length === 0;
   
   return (
     <div className="container mx-auto px-4 py-4">
@@ -41,7 +41,7 @@ const CalendarPage: React.FC = () => {
       {hasSearchResults && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
           <p className="text-purple-700">
-            Found {filteredEvents.length} event(s) matching "{searchFilters.keyword}".
+            Found {searchFilteredEvents.length} event(s) matching "{searchFilters.keyword}".
           </p>
         </div>
       )}

@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { formatDate, addMonths, addDays } from '../../utils/dateUtils';
+import { PlanningSelectionSummary } from '../Planning/PlanningSelectionSummary';
 
 const CalendarHeader: React.FC = () => {
   const { currentDate, view, setCurrentDate, refreshEvents, isLoading } = useCalendar();
@@ -72,6 +73,11 @@ const CalendarHeader: React.FC = () => {
         >
           <RefreshCw size={20} />
         </button>
+      </div>
+      
+      {/* Planning selection summary */}
+      <div className="mt-2">
+        <PlanningSelectionSummary />
       </div>
     </div>
   );

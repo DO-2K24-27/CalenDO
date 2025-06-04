@@ -7,9 +7,9 @@ import EventCard from '../Event/EventCard';
 import CurrentTimeCursor from './CurrentTimeCursor';
 
 const WeekView: React.FC = () => {
-  const { events, currentDate, setSelectedEvent, searchFilters } = useCalendar();
+  const { filteredEvents, currentDate, setSelectedEvent, searchFilters } = useCalendar();
   
-  const filteredEvents = filterEvents(events, searchFilters);
+  const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   const weekDays = getDaysInWeek(currentDate);
   const today = new Date();
   
@@ -42,7 +42,7 @@ const WeekView: React.FC = () => {
         {/* Day columns */}
         {weekDays.map((day, dayIndex) => {
           // Get events for this day
-          const dayEvents = filteredEvents.filter(event => {
+          const dayEvents = searchFilteredEvents.filter(event => {
             const eventStart = new Date(event.start_time);
             return isSameDay(eventStart, day);
           });
