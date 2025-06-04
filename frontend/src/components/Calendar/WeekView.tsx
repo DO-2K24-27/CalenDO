@@ -4,6 +4,7 @@ import { getDaysInWeek, isSameDay, formatShortDate } from '../../utils/dateUtils
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTop } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
+import CurrentTimeCursor from './CurrentTimeCursor';
 
 const WeekView: React.FC = () => {
   const { events, currentDate, setSelectedEvent, searchFilters } = useCalendar();
@@ -60,6 +61,11 @@ const WeekView: React.FC = () => {
               {Array.from({ length: 24 }).map((_, hour) => (
                 <div key={hour} className="border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}></div>
               ))}
+              
+              {/* Current time cursor for today */}
+              {isSameDay(day, today) && (
+                <CurrentTimeCursor hourHeight={HOUR_HEIGHT} isToday={true} />
+              )}
               
               {/* Events for this day */}
               {calculateEventPositions(dayEvents).map(event => {

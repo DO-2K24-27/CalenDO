@@ -79,3 +79,13 @@ export const calculateEventTop = (startTime: string, hourHeight: number): number
   
   return startHour * hourHeight;
 };
+
+/**
+ * Calculates the current time position in pixels
+ */
+export const calculateCurrentTimePosition = (hourHeight: number): number => {
+  const now = new Date();
+  const currentHour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  
+  return currentHour * hourHeight;
+};
