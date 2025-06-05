@@ -28,6 +28,7 @@ var (
 	dryRun     bool
 	customName string
 	customID   string
+	syncDelete bool // New flag to control deletion behavior
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -46,6 +47,11 @@ var importCmd = &cobra.Command{
 	Long: `Import calendar events from one or more iCal URLs or local files.
 Each iCal source will create a separate planning (calendar category) in the database.
 
+By default, the importer will sync events bidirectionally:
+- Add new events from the iCal feed
+- Update existing events if they've changed
+- Delete events that are no longer in the iCal feed
+
 Custom name and ID options can only be used when importing a single source.
 
 Examples:
@@ -53,7 +59,8 @@ Examples:
   ical-importer import file://path/to/calendar.ics
   ical-importer import --dry-run https://example.com/calendar.ics
   ical-importer import --name "My Custom Calendar" --id "custom-cal-id" https://example.com/calendar.ics
-  ical-importer import --name "Work Calendar" file://work.ics`,
+  ical-importer import --name "Work Calendar" file://work.ics
+  ical-importer import --sync-delete=false https://example.com/calendar.ics`,
 	Args: cobra.MinimumNArgs(1),
 	Run:  runImport,
 }
@@ -80,6 +87,11 @@ var syncCmd = &cobra.Command{
 	Short: "Sync calendars from a configuration file",
 	Long: `Sync multiple calendar sources from a YAML configuration file.
 This is useful for automated/scheduled imports of multiple calendars.
+
+By default, the sync command will maintain perfect synchronization:
+- Add new events from iCal feeds
+- Update existing events if they've changed  
+- Delete events that are no longer in iCal feeds
 
 Example config file:
 calendars:
@@ -125,6 +137,10 @@ func init() {
 	// Import command specific flags
 	importCmd.Flags().StringVar(&customName, "name", "", "custom name for the planning/calendar")
 	importCmd.Flags().StringVar(&customID, "id", "", "custom ID for the planning/calendar")
+	importCmd.Flags().BoolVar(&syncDelete, "sync-delete", true, "delete events that are no longer in the iCal feed")
+
+	// Sync command specific flags
+	syncCmd.Flags().BoolVar(&syncDelete, "sync-delete", true, "delete events that are no longer in the iCal feed")
 
 	// Add subcommands
 	rootCmd.AddCommand(importCmd)
@@ -272,6 +288,7 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 	}
 
 	// Process events
+	var allNewEvents []*models.Event
 	eventCount := 0
 	for _, child := range cal.Children {
 		if child.Name == "VEVENT" {
@@ -288,25 +305,55 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 				continue
 			}
 
-			// Import all event instances
-			for _, event := range events {
-				if dryRun {
-					log.Printf("[DRY RUN] Would import event: %s (%s)", event.Summary, event.UID)
-				} else {
-					if err := importerService.CreateOrUpdateEvent(event); err != nil {
-						log.Printf("Warning: Failed to import event %s: %v", event.Summary, err)
-						continue
-					}
-				}
-				eventCount++
-			}
+			// Collect all events for sync
+			allNewEvents = append(allNewEvents, events...)
+			eventCount += len(events)
 		}
 	}
 
 	if dryRun {
-		log.Printf("[DRY RUN] Would import %d events for planning: %s", eventCount, planning.Name)
+		log.Printf("[DRY RUN] Would sync %d events for planning: %s", eventCount, planning.Name)
+
+		// In dry run mode, show what would be deleted (only if sync-delete is enabled)
+		if syncDelete {
+			existingEvents, err := importerService.GetEventsByPlanningID(planning.ID)
+			if err == nil {
+				newEventUIDs := make(map[string]bool)
+				for _, event := range allNewEvents {
+					newEventUIDs[event.UID] = true
+				}
+
+				deletionCount := 0
+				for _, existingEvent := range existingEvents {
+					if !newEventUIDs[existingEvent.UID] {
+						log.Printf("[DRY RUN] Would delete event no longer in iCal: %s (%s)", existingEvent.Summary, existingEvent.UID)
+						deletionCount++
+					}
+				}
+				if deletionCount > 0 {
+					log.Printf("[DRY RUN] Would delete %d events no longer in iCal", deletionCount)
+				}
+			}
+		} else {
+			log.Printf("[DRY RUN] Sync-delete disabled - would only add/update events")
+		}
 	} else {
-		log.Printf("Imported %d events for planning: %s", eventCount, planning.Name)
+		// Sync events based on sync-delete flag
+		if syncDelete {
+			// Sync events (add/update new ones, delete removed ones)
+			if err := importerService.SyncEventsForPlanning(planning.ID, allNewEvents); err != nil {
+				return fmt.Errorf("failed to sync events: %w", err)
+			}
+			log.Printf("Synced %d events for planning: %s", eventCount, planning.Name)
+		} else {
+			// Legacy mode: only add/update events, don't delete
+			for _, event := range allNewEvents {
+				if err := importerService.CreateOrUpdateEvent(event); err != nil {
+					log.Printf("Warning: Failed to import event %s: %v", event.Summary, err)
+				}
+			}
+			log.Printf("Imported %d events for planning: %s", eventCount, planning.Name)
+		}
 	}
 
 	// Generate and log calendar description

@@ -95,6 +95,76 @@ func (i *Importer) DeleteEventByUID(uid string) error {
 	return i.db.Where("uid = ?", uid).Delete(&models.Event{}).Error
 }
 
+// SyncEventsForPlanning syncs events for a planning, removing events that are no longer in the iCal feed
+func (i *Importer) SyncEventsForPlanning(planningID string, newEvents []*models.Event) error {
+	// Get all existing events for this planning
+	existingEvents, err := i.GetEventsByPlanningID(planningID)
+	if err != nil {
+		return err
+	}
+
+	// Create a map of new event UIDs for quick lookup
+	newEventUIDs := make(map[string]bool)
+	for _, event := range newEvents {
+		newEventUIDs[event.UID] = true
+	}
+
+	// Find events that are in the database but not in the new iCal feed
+	var eventsToDelete []string
+	for _, existingEvent := range existingEvents {
+		if !newEventUIDs[existingEvent.UID] {
+			eventsToDelete = append(eventsToDelete, existingEvent.UID)
+		}
+	}
+
+	// Delete events that are no longer in the iCal feed
+	deleteCount := 0
+	for _, uid := range eventsToDelete {
+		if err := i.DeleteEventByUID(uid); err != nil {
+			log.Printf("Warning: Failed to delete event %s: %v", uid, err)
+		} else {
+			deleteCount++
+		}
+	}
+
+	if deleteCount > 0 {
+		log.Printf("Deleted %d events no longer in iCal feed", deleteCount)
+	}
+
+	// Create or update events from the new iCal feed
+	updateCount := 0
+	createCount := 0
+	for _, event := range newEvents {
+		var existing models.Event
+		result := i.db.Where("uid = ?", event.UID).First(&existing)
+
+		if result.Error == nil {
+			// Event exists, update it
+			event.Created = existing.Created // Preserve original creation time
+			if err := i.db.Save(event).Error; err != nil {
+				log.Printf("Warning: Failed to update event %s: %v", event.UID, err)
+			} else {
+				updateCount++
+			}
+		} else if result.Error == gorm.ErrRecordNotFound {
+			// Event doesn't exist, create it
+			if err := i.db.Create(event).Error; err != nil {
+				log.Printf("Warning: Failed to create event %s: %v", event.UID, err)
+			} else {
+				createCount++
+			}
+		} else {
+			log.Printf("Warning: Database error for event %s: %v", event.UID, result.Error)
+		}
+	}
+
+	if createCount > 0 || updateCount > 0 {
+		log.Printf("Processed events: %d created, %d updated", createCount, updateCount)
+	}
+
+	return nil
+}
+
 // InitializeTables creates the necessary database tables if they don't exist
 func (i *Importer) InitializeTables() error {
 	// Auto-migrate the tables

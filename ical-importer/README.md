@@ -99,12 +99,67 @@ Use a specific configuration file:
 ./ical-importer import --config /path/to/config.yaml "https://example.com/calendar.ics"
 ```
 
+### Bulk Sync from Configuration File
+
+For managing multiple calendar sources, use the sync command with a YAML configuration file:
+
+```bash
+./ical-importer sync sync-config.yaml
+```
+
+Example `sync-config.yaml`:
+```yaml
+calendars:
+  - name: "Work Calendar"
+    url: "https://calendar.google.com/calendar/ical/work@example.com/public/basic.ics"
+    enabled: true
+  - name: "Personal Calendar"
+    url: "https://calendar.google.com/calendar/ical/personal@example.com/public/basic.ics"
+    enabled: true
+    custom_id: "personal-cal"
+  - name: "Team Calendar"
+    url: "https://outlook.office365.com/owa/calendar/team@company.com/reachcalendar.ics"
+    enabled: false  # Temporarily disabled
+```
+
+Configuration options:
+- `name`: Display name for the calendar (required)
+- `url`: iCal URL or file path (required)
+- `enabled`: Whether to sync this calendar (default: true)
+- `custom_id`: Custom ID for the planning (optional)
+
+### Custom Planning Names and IDs
+
+For single imports, you can customize the planning name and ID:
+```bash
+./ical-importer import --name "My Work Calendar" --id "work-cal" "https://example.com/calendar.ics"
+```
+
 ## How It Works
 
 1. **Planning Creation**: Each iCal source creates a separate "planning" (calendar category) in the database
-2. **Event Import**: All events from the iCal are imported and linked to the planning
+2. **Event Synchronization**: 
+   - **Add**: New events from the iCal are imported
+   - **Update**: Existing events with the same UID are updated if they've changed
+   - **Delete**: Events that are no longer in the iCal feed are removed from the database (by default)
 3. **Deduplication**: Events with the same UID are updated rather than duplicated
 4. **Metadata Preservation**: Maintains event timestamps, descriptions, locations, and other metadata
+
+### Sync vs Import Behavior
+
+By default, the importer maintains perfect synchronization with the iCal source:
+- If an event is deleted from the original calendar, it will be deleted from CalenDO
+- If an event is modified in the original calendar, it will be updated in CalenDO
+- New events are automatically added
+
+This behavior can be controlled with the `--sync-delete` flag:
+```bash
+# Full synchronization (default) - removes deleted events
+./ical-importer import https://example.com/calendar.ics
+
+# Legacy mode - only add/update events, never delete
+./ical-importer import --sync-delete=false https://example.com/calendar.ics
+```
 
 ## Common iCal Sources
 
