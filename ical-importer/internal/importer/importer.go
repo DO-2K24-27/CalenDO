@@ -26,8 +26,9 @@ func (i *Importer) CreateOrUpdatePlanning(planning *models.Planning) error {
 	result := i.db.Where("id = ?", planning.ID).First(&existing)
 
 	if result.Error == nil {
-		// Planning exists, update it
+		// Planning exists, update it but preserve certain fields
 		planning.Created = existing.Created // Preserve original creation time
+		planning.Color = existing.Color     // Preserve existing color
 		return i.db.Save(planning).Error
 	} else if result.Error == gorm.ErrRecordNotFound {
 		// Planning doesn't exist, create it
