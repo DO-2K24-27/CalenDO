@@ -10,11 +10,46 @@ import ErrorDisplay from '../components/UI/ErrorDisplay';
 import { findNextBreak } from '../utils/dateUtils';
 
 const CountdownPage: React.FC = () => {
-  const { events, isLoading, error, refreshEvents } = useCalendar();
+  const { filteredEvents, selectedPlannings, plannings, isLoading, error, refreshEvents } = useCalendar();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const navigate = useNavigate();
   
-  const nextBreakDate = events ? findNextBreak(events) : null;
+  const nextBreakDate = filteredEvents ? findNextBreak(filteredEvents) : null;
+  
+  // Determine if we're currently in an event or in a break
+  const now = new Date();
+  const currentEvents = filteredEvents?.filter(event => 
+    new Date(event.start_time) <= now && new Date(event.end_time) > now
+  ) || [];
+  const isInEvent = currentEvents.length > 0;
+  
+  // Determine the countdown title based on current state
+  const getCountdownTitle = () => {
+    if (!nextBreakDate) {
+      return "You're in a break!";
+    }
+    if (isInEvent) {
+      if (currentEvents.length > 1) {
+        return "Time Until Next Break";
+      }
+      return "Time Until Next Break";
+    } else {
+      return "Time Until Break Ends";
+    }
+  };
+
+  const getPlanningSelectionText = () => {
+    if (selectedPlannings.length === 0) {
+      return "All plannings";
+    }
+    if (selectedPlannings.length === plannings.length) {
+      return "All plannings";
+    }
+    if (selectedPlannings.length === 1) {
+      return selectedPlannings[0].name;
+    }
+    return `${selectedPlannings.length} selected plannings`;
+  };
   
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -82,9 +117,38 @@ const CountdownPage: React.FC = () => {
           <ClockDisplay />
         </div>
         
-        <h1 className="text-3xl md:text-5xl font-bold text-purple-700 mb-8 text-center">
-          Time Until Next Break
+        <h1 className="text-3xl md:text-5xl font-bold text-purple-700 mb-4 text-center">
+          {getCountdownTitle()}
         </h1>
+        
+        {/* Planning selection indicator */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full">
+            <span className="text-sm text-purple-600">Considering:</span>
+            <div className="flex gap-1">
+              {selectedPlannings.length > 0 ? (
+                selectedPlannings.slice(0, 3).map((planning) => (
+                  <div
+                    key={planning.id}
+                    className="w-3 h-3 rounded-full border border-purple-300"
+                    style={{ backgroundColor: planning.color }}
+                    title={planning.name}
+                  />
+                ))
+              ) : (
+                <div className="w-3 h-3 rounded-full bg-gray-400 border border-purple-300" />
+              )}
+              {selectedPlannings.length > 3 && (
+                <div className="w-3 h-3 rounded-full bg-gray-400 border border-purple-300 flex items-center justify-center">
+                  <span className="text-xs text-white font-bold">+</span>
+                </div>
+              )}
+            </div>
+            <span className="text-sm text-purple-700 font-medium">
+              {getPlanningSelectionText()}
+            </span>
+          </div>
+        </div>
         
         {isLoading ? (
           <LoadingSpinner size="large" />
@@ -93,7 +157,11 @@ const CountdownPage: React.FC = () => {
         ) : (
           <>
             <CountdownTimer breakDate={nextBreakDate} />
-            <CountdownDetails breakDate={nextBreakDate} />
+            <CountdownDetails 
+              breakDate={nextBreakDate} 
+              isInEvent={isInEvent} 
+              currentEventsCount={currentEvents.length} 
+            />
           </>
         )}
       </div>

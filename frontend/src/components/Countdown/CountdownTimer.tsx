@@ -27,7 +27,8 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
   if (!breakDate) {
     return (
       <div className="text-center p-8">
-        <h2 className="text-3xl font-bold text-gray-400">You're currently in a break!</h2>
+        <h2 className="text-3xl font-bold text-green-600">You're currently in a break!</h2>
+        <p className="text-lg text-gray-600 mt-2">No upcoming events in selected plannings</p>
       </div>
     );
   }

@@ -71,18 +71,43 @@ export const findNextBreak = (events: Event[]): Date | null => {
   
   const now = new Date();
   
-  // First, check if we're currently in an event (event started but hasn't ended yet)
-  const currentEvent = events.find(event => 
+  // Find all current events (events that have started but not ended yet)
+  const currentEvents = events.filter(event => 
     new Date(event.start_time) <= now && new Date(event.end_time) > now
   );
   
-  if (currentEvent) {
-    // If we're in an event, the next break starts when this event ends
-    return new Date(currentEvent.end_time);
+  if (currentEvents.length > 0) {
+    // If we're in one or more events, find the one that ends soonest
+    // The next break starts when the earliest ending current event finishes
+    const earliestEndingEvent = currentEvents.reduce((earliest, current) => {
+      const currentEndTime = new Date(current.end_time);
+      const earliestEndTime = new Date(earliest.end_time);
+      return currentEndTime < earliestEndTime ? current : earliest;
+    });
+    
+    return new Date(earliestEndingEvent.end_time);
   }
   
-  // If we're not in an event, we're already in a break
-  // No need to find the next break
+  // If we're not currently in any event, find the next upcoming event
+  // The break will end when that event starts
+  const upcomingEvents = events.filter(event => 
+    new Date(event.start_time) > now
+  );
+  
+  if (upcomingEvents.length > 0) {
+    // Sort by start time and get the earliest
+    const nextEvent = upcomingEvents.reduce((earliest, current) => {
+      const currentStartTime = new Date(current.start_time);
+      const earliestStartTime = new Date(earliest.start_time);
+      return currentStartTime < earliestStartTime ? current : earliest;
+    });
+    
+    // We're currently in a break, return when the next event starts
+    // This indicates when the current break will end
+    return new Date(nextEvent.start_time);
+  }
+  
+  // If no upcoming events, we're in an indefinite break
   return null;
 };
 
