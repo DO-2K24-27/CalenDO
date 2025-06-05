@@ -3,18 +3,7 @@ import { useCalendar } from '../../contexts/CalendarContext';
 export const PlanningSelectionSummary = () => {
   const { selectedPlannings, plannings } = useCalendar();
 
-  if (selectedPlannings.length === 0) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-gray-400" />
-          <span className="font-medium">Showing all events</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (selectedPlannings.length === plannings.length) {
+  if (selectedPlannings.length === plannings.length || selectedPlannings.length === 0) {
     return (
       <div className="text-sm text-gray-600">
         Showing events from <span className="font-medium">all plannings</span>

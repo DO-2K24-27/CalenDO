@@ -34,10 +34,7 @@ export const PlanningMultiSelector = () => {
   const isNoneSelected = selectedPlannings.length === 0;
 
   const getButtonText = () => {
-    if (isNoneSelected) {
-      return 'All Events';
-    }
-    if (isAllSelected) {
+    if (isAllSelected || isNoneSelected) {
       return 'All Plannings';
     }
     if (selectedPlannings.length === 1) {
@@ -103,7 +100,7 @@ export const PlanningMultiSelector = () => {
               onClick={handleSelectAll}
               className="w-full text-left px-2 py-1 text-sm text-purple-600 hover:bg-purple-50 rounded"
             >
-              {isAllSelected ? 'Clear All (Show All Events)' : 'Select All'}
+              {isAllSelected ? 'Clear All' : 'Select All'}
             </button>
           </div>
           
