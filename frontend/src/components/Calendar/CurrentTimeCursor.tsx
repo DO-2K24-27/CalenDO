@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { calculateCurrentTimePosition } from '../../utils/eventUtils';
+import { calculateCurrentTimePosition, calculateCurrentTimePositionWithRange } from '../../utils/eventUtils';
 
 interface CurrentTimeCursorProps {
   hourHeight: number;
   isToday?: boolean;
+  rangeStartHour?: number;
+  rangeEndHour?: number;
 }
 
 const CurrentTimeCursor: React.FC<CurrentTimeCursorProps> = ({ 
   hourHeight, 
-  isToday = true 
+  isToday = true,
+  rangeStartHour = 0,
+  rangeEndHour = 24
 }) => {
   const [currentTimePosition, setCurrentTimePosition] = useState(0);
 
   useEffect(() => {
     const updatePosition = () => {
-      setCurrentTimePosition(calculateCurrentTimePosition(hourHeight));
+      if (rangeStartHour > 0) {
+        setCurrentTimePosition(calculateCurrentTimePositionWithRange(hourHeight, rangeStartHour));
+      } else {
+        setCurrentTimePosition(calculateCurrentTimePosition(hourHeight));
+      }
     };
 
     // Update immediately
@@ -24,10 +32,20 @@ const CurrentTimeCursor: React.FC<CurrentTimeCursorProps> = ({
     const interval = setInterval(updatePosition, 60000);
 
     return () => clearInterval(interval);
-  }, [hourHeight]);
+  }, [hourHeight, rangeStartHour]);
 
   if (!isToday) {
     return null;
+  }
+
+  // Don't show cursor if current time is outside the visible range
+  if (rangeStartHour > 0) {
+    const now = new Date();
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    
+    if (currentHour < rangeStartHour || currentHour > rangeEndHour) {
+      return null;
+    }
   }
 
   return (

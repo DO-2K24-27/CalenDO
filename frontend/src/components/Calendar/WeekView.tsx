@@ -2,7 +2,7 @@ import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { getDaysInWeek, isSameDay, formatShortDate } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
-import { calculateEventPositions, calculateEventHeight, calculateEventTop } from '../../utils/eventUtils';
+import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
 import CurrentTimeCursor from './CurrentTimeCursor';
 
@@ -12,6 +12,16 @@ const WeekView: React.FC = () => {
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   const weekDays = getDaysInWeek(currentDate);
   const today = new Date();
+  
+  // Get all events for the week to calculate optimal time range
+  const weekEvents = searchFilteredEvents.filter(event => {
+    const eventStart = new Date(event.start_time);
+    return weekDays.some(day => isSameDay(eventStart, day));
+  });
+  
+  // Calculate optimal time range based on all week events
+  const { startHour, endHour } = calculateOptimalTimeRange(weekEvents);
+  const visibleHours = endHour - startHour;
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
   
@@ -32,11 +42,15 @@ const WeekView: React.FC = () => {
       <div className="grid grid-cols-8 divide-x divide-gray-200 relative">
         {/* Time column */}
         <div className="space-y-0">
-          {Array.from({ length: 24 }).map((_, hour) => (
-            <div key={hour} className="text-xs text-gray-500 text-right pr-2 border-t border-gray-100 first:border-t-0 flex items-start pt-1" style={{ height: `${HOUR_HEIGHT}px` }}>
-              {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-            </div>
-          ))}
+          {Array.from({ length: visibleHours }).map((_, index) => {
+            const hour = startHour + index;
+            const displayHour = hour >= 24 ? hour - 24 : hour; // Handle midnight rollover
+            return (
+              <div key={hour} className="text-xs text-gray-500 text-right pr-2 border-t border-gray-100 first:border-t-0 flex items-start pt-1" style={{ height: `${HOUR_HEIGHT}px` }}>
+                {displayHour === 0 ? '12 AM' : displayHour < 12 ? `${displayHour} AM` : displayHour === 12 ? '12 PM' : `${displayHour - 12} PM`}
+              </div>
+            );
+          })}
         </div>
         
         {/* Day columns */}
@@ -58,18 +72,26 @@ const WeekView: React.FC = () => {
               className={`relative ${isSameDay(day, today) ? 'bg-purple-50' : ''}`}
             >
               {/* Hour grid for this day */}
-              {Array.from({ length: 24 }).map((_, hour) => (
-                <div key={hour} className="border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}></div>
-              ))}
+              {Array.from({ length: visibleHours }).map((_, index) => {
+                const hour = startHour + index;
+                return (
+                  <div key={hour} className="border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}></div>
+                );
+              })}
               
               {/* Current time cursor for today */}
               {isSameDay(day, today) && (
-                <CurrentTimeCursor hourHeight={HOUR_HEIGHT} isToday={true} />
+                <CurrentTimeCursor 
+                  hourHeight={HOUR_HEIGHT} 
+                  isToday={true} 
+                  rangeStartHour={startHour}
+                  rangeEndHour={endHour}
+                />
               )}
               
               {/* Events for this day */}
               {calculateEventPositions(dayEvents).map(event => {
-                const top = calculateEventTop(event.start_time, HOUR_HEIGHT);
+                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
                 const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 
                 const width = 100 / event.totalColumns;
