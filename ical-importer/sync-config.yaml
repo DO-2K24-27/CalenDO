@@ -1,0 +1,6 @@
+# Example sync configuration with custom name and ID options
+calendars:
+  - name: "DO3"
+    url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd863dc05dc8a15d9422fae7ee484b3898d8e851896a1242f538a915392024bd1e25b,1"
+    enabled: true
+    # custom_id: "do3-2024-2025"
