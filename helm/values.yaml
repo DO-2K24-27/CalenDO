@@ -261,3 +261,98 @@ postgresql:
     persistence:
       enabled: true
       size: 1Gi
+
+# iCal Importer configuration
+icalImporter:
+  enabled: true
+  
+  # Cron job configuration
+  cronjob:
+    # Run every 30 minutes
+    schedule: "0 1 * * *"
+    # Keep last 3 successful jobs and 1 failed job
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 1
+    # Job will be killed if it runs longer than 10 minutes
+    activeDeadlineSeconds: 600
+    # Don't start new job if previous one is still running
+    concurrencyPolicy: Forbid
+    # Give the job 30 seconds to finish when stopping
+    terminationGracePeriodSeconds: 30
+  
+  image:
+    repository: calendo-ical-importer
+    pullPolicy: Always
+    tag: "latest"
+
+  imagePullSecrets: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # Configuration for the ical-importer
+  configMapData:
+    config.yaml: |
+      # CalenDO iCal Importer Configuration
+      database:
+        driver: postgres
+        host: calendo-postgresql
+        port: 5432
+        username: postgres
+        password: postgres
+        dbname: calendo
+        sslmode: disable
+        max_open_conns: 25
+        max_idle_conns: 5
+        conn_max_lifetime: 5m
+
+      # Logging configuration
+      logging:
+        level: info
+        file: "logs/importer.log"
+
+    sync-config.yaml: |
+      # Sync configuration for calendars
+      calendars:
+        - name: "DO3"
+          url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd863dc05dc8a15d9422fae7ee484b3898d8e851896a1242f538a915392024bd1e25b,1"
+          enabled: true
+        - name: "DO4"
+          url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd863bcbff929ac380e6e7b9c42537a27a3110cbac0bdb67220fb583d26eb8c88c83a166c54e36382c1aa3eb0ff5cb8980cdb,1"
+          enabled: true
+        - name: "DO5"
+          url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd8637ec8dca23a219b6c5971b37e44c35393a8bd1410f08d75eb4923ee44282fb5dd,1"
+          enabled: true
+

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "calendo.frontend.fullname" . }}-frontend
+  name: {{ include "calendo.frontend.fullname" . }}
   labels:
     {{- include "calendo.frontend.labels" . | nindent 4 }}
     app.kubernetes.io/component: frontend

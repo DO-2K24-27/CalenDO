@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "calendo.backend.fullname" . }}-backend
+  name: {{ include "calendo.backend.fullname" . }}
   labels:
     {{- include "calendo.backend.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
@@ -53,17 +53,17 @@ spec:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_USER
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_PASSWORD
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendo.backend.fullname" . }}-backend-db-credentials
+                  name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_NAME
           volumeMounts:
             - name: config-volume
@@ -95,7 +95,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ include "calendo.backend.fullname" . }}-backend-config
+            name: {{ include "calendo.backend.fullname" . }}-config
       {{- with .Values.backend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

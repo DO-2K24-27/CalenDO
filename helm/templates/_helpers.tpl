@@ -14,6 +14,10 @@ Expand the name of the chart.
 {{- include "calendo.name" . }}-frontend
 {{- end }}
 
+{{- define "calendo.icalimporter.name" -}}
+{{- include "calendo.name" . }}-icalimporter
+{{- end }}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -38,6 +42,10 @@ If release name contains chart name it will be used as a full name.
 
 {{- define "calendo.frontend.fullname" -}}
 {{- include "calendo.fullname" . }}-frontend
+{{- end }}
+
+{{- define "calendo.icalimporter.fullname" -}}
+{{- include "calendo.fullname" . }}-icalimporter
 {{- end }}
 
 {{/*
@@ -68,6 +76,15 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{- define "calendo.icalimporter.labels" -}}
+helm.sh/chart: {{ include "calendo.chart" . }}
+{{ include "calendo.icalimporter.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{/*
 Selector labels
 */}}
@@ -78,6 +95,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{- define "calendo.frontend.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "calendo.frontend.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "calendo.icalimporter.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "calendo.icalimporter.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
@@ -100,5 +122,16 @@ Create the name of the service account to use for frontend
 {{- default (include "calendo.frontend.fullname" .) .Values.frontend.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.frontend.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use for icalimporter
+*/}}
+{{- define "calendo.icalimporter.serviceAccountName" -}}
+{{- if .Values.icalImporter.serviceAccount.create }}
+{{- default (include "calendo.icalimporter.fullname" .) .Values.icalImporter.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.icalImporter.serviceAccount.name }}
 {{- end }}
 {{- end }}

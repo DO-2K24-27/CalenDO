@@ -11,13 +11,13 @@ Your release is named {{ .Release.Name }}.
      {{- end }}
    {{- end }}
    {{- else if contains "NodePort" .Values.backend.service.type }}
-     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.backend.fullname" . }}-backend)
+     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.backend.fullname" . }})
      export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
      echo http://$NODE_IP:$NODE_PORT
    {{- else if contains "LoadBalancer" .Values.backend.service.type }}
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.backend.fullname" . }}-backend'
-     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.backend.fullname" . }}-backend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.backend.fullname" . }}'
+     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.backend.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
      echo http://$SERVICE_IP:{{ .Values.backend.service.port }}
    {{- else if contains "ClusterIP" .Values.backend.service.type }}
      export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "calendo.backend.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=backend" -o jsonpath="{.items[0].metadata.name}")
@@ -36,13 +36,13 @@ Your release is named {{ .Release.Name }}.
      {{- end }}
    {{- end }}
    {{- else if contains "NodePort" .Values.frontend.service.type }}
-     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.frontend.fullname" . }}-frontend)
+     export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "calendo.frontend.fullname" . }})
      export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
      echo http://$NODE_IP:$NODE_PORT
    {{- else if contains "LoadBalancer" .Values.frontend.service.type }}
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.frontend.fullname" . }}-frontend'
-     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.frontend.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+           You can watch the status of by running 'kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "calendo.frontend.fullname" . }}'
+     export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "calendo.frontend.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
      echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
    {{- else if contains "ClusterIP" .Values.frontend.service.type }}
      export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "calendo.frontend.name" . }},app.kubernetes.io/instance={{ .Release.Name }},app.kubernetes.io/component=frontend" -o jsonpath="{.items[0].metadata.name}")
@@ -61,3 +61,37 @@ Your release is named {{ .Release.Name }}.
    PostgreSQL Password: kubectl get secret --namespace {{ .Release.Namespace }} {{ .Release.Name }}-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode
    PostgreSQL Database: {{ .Values.postgresql.auth.database }}
 {{- end }}
+
+{{- if .Values.icalImporter.enabled }}
+4. iCal Importer (Calendar Synchronization):
+   CronJob Schedule: {{ .Values.icalImporter.cronjob.schedule }}
+   
+   To check the status:
+     kubectl get cronjobs {{ include "calendo.icalimporter.fullname" . }}
+   
+   To view recent job logs:
+     kubectl logs -l app.kubernetes.io/component=ical-importer --tail=50
+   
+   To manually trigger a sync:
+     kubectl create job --from=cronjob/{{ include "calendo.icalimporter.fullname" . }} manual-sync-$(date +%s)
+   
+   Calendar sync configuration is stored in ConfigMap: {{ include "calendo.icalimporter.fullname" . }}
+{{- end }}
+
+===================================================================
+
+GETTING STARTED:
+
+1. Wait for all pods to be ready:
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+2. Check the backend API health:
+   kubectl port-forward service/{{ include "calendo.backend.fullname" . }} 8080:8080
+   curl http://localhost:8080/api/health
+
+3. Monitor calendar synchronization:
+   kubectl logs -f -l app.kubernetes.io/component=ical-importer
+
+For more detailed documentation, see:
+- Backend API: /swagger endpoint
+- iCal Importer: helm/ICAL_IMPORTER_README.md

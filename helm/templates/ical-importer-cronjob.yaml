@@ -1,0 +1,74 @@
+{{- if .Values.icalImporter.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "calendo.icalimporter.fullname" . }}
+  labels:
+    {{- include "calendo.icalimporter.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ical-importer
+spec:
+  schedule: {{ .Values.icalImporter.cronjob.schedule | quote }}
+  concurrencyPolicy: {{ .Values.icalImporter.cronjob.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.icalImporter.cronjob.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.icalImporter.cronjob.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ .Values.icalImporter.cronjob.activeDeadlineSeconds }}
+      template:
+        metadata:
+          labels:
+            {{- include "calendo.icalimporter.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: ical-importer
+          {{- with .Values.icalImporter.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        spec:
+          {{- with .Values.icalImporter.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "calendo.icalimporter.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.icalImporter.podSecurityContext | nindent 12 }}
+          restartPolicy: OnFailure
+          terminationGracePeriodSeconds: {{ .Values.icalImporter.cronjob.terminationGracePeriodSeconds }}
+          containers:
+          - name: ical-importer
+            securityContext:
+              {{- toYaml .Values.icalImporter.securityContext | nindent 14 }}
+            image: "{{ .Values.icalImporter.image.repository }}:{{ .Values.icalImporter.image.tag }}"
+            imagePullPolicy: {{ .Values.icalImporter.image.pullPolicy }}
+            command:
+            - "./ical-importer"
+            args:
+            - "sync"
+            - "/app/sync-config.yaml"
+            volumeMounts:
+            - name: config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: config
+              mountPath: /app/sync-config.yaml
+              subPath: sync-config.yaml
+              readOnly: true
+            resources:
+              {{- toYaml .Values.icalImporter.resources | nindent 14 }}
+          volumes:
+          - name: config
+            configMap:
+              name: {{ include "calendo.icalimporter.fullname" . }}
+          {{- with .Values.icalImporter.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.icalImporter.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.icalImporter.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

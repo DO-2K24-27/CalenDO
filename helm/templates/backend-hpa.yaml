@@ -2,7 +2,7 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "calendo.backend.fullname" . }}-backend
+  name: {{ include "calendo.backend.fullname" . }}
   labels:
     {{- include "calendo.backend.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
@@ -10,7 +10,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "calendo.backend.fullname" . }}-backend
+    name: {{ include "calendo.backend.fullname" . }}
   minReplicas: {{ .Values.backend.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.backend.autoscaling.maxReplicas }}
   metrics:
