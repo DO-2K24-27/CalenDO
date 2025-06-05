@@ -7,49 +7,96 @@ export interface PositionedEvent extends Event {
 
 /**
  * Calculates positioning for overlapping events to prevent them from overlapping visually
+ * Events are grouped by planning to ensure consistent positioning
  */
 export const calculateEventPositions = (events: Event[]): PositionedEvent[] => {
   if (events.length === 0) return [];
 
-  // Sort events by start time
+  // Group events by planning_id to maintain consistent positioning
+  const eventsByPlanning = new Map<string, Event[]>();
+  events.forEach(event => {
+    const planningId = event.planning_id;
+    if (!eventsByPlanning.has(planningId)) {
+      eventsByPlanning.set(planningId, []);
+    }
+    eventsByPlanning.get(planningId)!.push(event);
+  });
+
+  // Sort planning groups by the earliest event start time in each planning
+  const sortedPlanningIds = Array.from(eventsByPlanning.keys()).sort((a, b) => {
+    const earliestA = Math.min(...eventsByPlanning.get(a)!.map(e => new Date(e.start_time).getTime()));
+    const earliestB = Math.min(...eventsByPlanning.get(b)!.map(e => new Date(e.start_time).getTime()));
+    return earliestA - earliestB;
+  });
+
+  // Assign base column ranges for each planning
+  const planningColumnMap = new Map<string, number>();
+  sortedPlanningIds.forEach((planningId, index) => {
+    planningColumnMap.set(planningId, index);
+  });
+
+  // Sort all events by start time for overlap detection
   const sortedEvents = [...events].sort((a, b) => 
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
 
   const positionedEvents: PositionedEvent[] = [];
-  const activeEvents: PositionedEvent[] = [];
+  const activeEventsByPlanning = new Map<string, PositionedEvent[]>();
 
   for (const event of sortedEvents) {
     const eventStart = new Date(event.start_time);
+    const planningId = event.planning_id;
+    const basePlanningColumn = planningColumnMap.get(planningId)!;
 
-    // Remove events that have ended
-    const stillActive = activeEvents.filter(activeEvent => {
+    // Initialize active events for this planning if not exists
+    if (!activeEventsByPlanning.has(planningId)) {
+      activeEventsByPlanning.set(planningId, []);
+    }
+
+    // Remove events that have ended from this planning
+    const stillActive = activeEventsByPlanning.get(planningId)!.filter(activeEvent => {
       const activeEnd = new Date(activeEvent.end_time);
       return activeEnd > eventStart;
     });
-    activeEvents.length = 0;
-    activeEvents.push(...stillActive);
+    activeEventsByPlanning.set(planningId, stillActive);
 
-    // Find the first available column
-    const usedColumns = new Set(activeEvents.map(e => e.column));
-    let column = 0;
-    while (usedColumns.has(column)) {
-      column++;
+    // Find the first available sub-column within this planning's range
+    const usedSubColumns = new Set(stillActive.map(e => e.column - basePlanningColumn));
+    let subColumn = 0;
+    while (usedSubColumns.has(subColumn)) {
+      subColumn++;
     }
+
+    const column = basePlanningColumn + subColumn;
 
     const positionedEvent: PositionedEvent = {
       ...event,
       column,
-      totalColumns: Math.max(column + 1, activeEvents.length + 1)
+      totalColumns: 0 // Will be calculated after processing all events
     };
 
     positionedEvents.push(positionedEvent);
-    activeEvents.push(positionedEvent);
+    activeEventsByPlanning.get(planningId)!.push(positionedEvent);
+  }
 
-    // Update totalColumns for all active events
-    const maxColumns = Math.max(...activeEvents.map(e => e.column)) + 1;
-    activeEvents.forEach(activeEvent => {
-      activeEvent.totalColumns = maxColumns;
+  // Calculate total columns needed by finding overlapping events across all plannings
+  for (const event of positionedEvents) {
+    const eventStart = new Date(event.start_time).getTime();
+    const eventEnd = new Date(event.end_time).getTime();
+
+    // Find all events that overlap with this event
+    const overlappingEvents = positionedEvents.filter(otherEvent => {
+      const otherStart = new Date(otherEvent.start_time).getTime();
+      const otherEnd = new Date(otherEvent.end_time).getTime();
+      return otherStart < eventEnd && otherEnd > eventStart;
+    });
+
+    const maxColumn = Math.max(...overlappingEvents.map(e => e.column));
+    const totalColumns = maxColumn + 1;
+
+    // Update total columns for all overlapping events
+    overlappingEvents.forEach(overlappingEvent => {
+      overlappingEvent.totalColumns = Math.max(overlappingEvent.totalColumns, totalColumns);
     });
   }
 
