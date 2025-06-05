@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -248,7 +250,7 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 	if customID != "" {
 		finalPlanningID = customID
 	} else {
-		finalPlanningID = generatePlanningID(finalPlanningName)
+		finalPlanningID = generatePlanningID(source)
 	}
 
 	// Create or get planning
@@ -447,14 +449,13 @@ func extractNameFromFile(filePath string) string {
 	return fmt.Sprintf("Calendar: %s", name)
 }
 
-func generatePlanningID(name string) string {
-	// Create a slug-like ID from the name
-	id := strings.ToLower(name)
-	id = strings.ReplaceAll(id, " ", "-")
-	id = strings.ReplaceAll(id, ":", "")
-
-	// Add UUID suffix to ensure uniqueness
-	return fmt.Sprintf("%s-%s", id, uuid.New().String()[:8])
+func generatePlanningID(source string) string {
+	// Create a SHA256 hash of the iCal source (URL or file path)
+	hash := sha256.Sum256([]byte(source))
+	hashStr := hex.EncodeToString(hash[:])
+	
+	// Use first 12 characters of the hash for a more manageable ID
+	return fmt.Sprintf("ical-%s", hashStr[:12])
 }
 
 func generateRandomColor() string {
