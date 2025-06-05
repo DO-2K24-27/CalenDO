@@ -257,7 +257,7 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 	planning := &models.Planning{
 		ID:          finalPlanningID,
 		Name:        finalPlanningName,
-		Description: fmt.Sprintf("Imported from: %s", source),
+		Description: generateCalendarDescription(cal, source),
 		Color:       generateRandomColor(),
 		IsDefault:   false,
 	}
@@ -308,6 +308,10 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 	} else {
 		log.Printf("Imported %d events for planning: %s", eventCount, planning.Name)
 	}
+
+	// Generate and log calendar description
+	desc := generateCalendarDescription(cal, source)
+	log.Printf("Calendar description:\n%s", desc)
 
 	return nil
 }
@@ -453,7 +457,7 @@ func generatePlanningID(source string) string {
 	// Create a SHA256 hash of the iCal source (URL or file path)
 	hash := sha256.Sum256([]byte(source))
 	hashStr := hex.EncodeToString(hash[:])
-	
+
 	// Use first 12 characters of the hash for a more manageable ID
 	return fmt.Sprintf("ical-%s", hashStr[:12])
 }
@@ -567,7 +571,72 @@ func runSync(cmd *cobra.Command, args []string) {
 	log.Printf("Sync completed! Success: %d, Errors: %d", successCount, errorCount)
 }
 
-// ...existing functions...
+// generateCalendarDescription creates a descriptive text about the calendar based on its properties
+func generateCalendarDescription(cal *ical.Calendar, source string) string {
+	var descParts []string
+
+	// Add calendar name if available
+	if prop := cal.Props.Get("X-WR-CALNAME"); prop != nil && prop.Value != "" {
+		descParts = append(descParts, fmt.Sprintf("Calendar: %s", prop.Value))
+	}
+
+	// Add calendar description if available
+	if prop := cal.Props.Get("X-WR-CALDESC"); prop != nil && prop.Value != "" {
+		descParts = append(descParts, fmt.Sprintf("Description: %s", prop.Value))
+	}
+
+	// Add timezone information if available
+	if prop := cal.Props.Get("X-WR-TIMEZONE"); prop != nil && prop.Value != "" {
+		descParts = append(descParts, fmt.Sprintf("Timezone: %s", prop.Value))
+	}
+
+	// Add product ID (what created the calendar) if available
+	if prop := cal.Props.Get("PRODID"); prop != nil && prop.Value != "" {
+		// Clean up common PRODID values to be more user-friendly
+		prodID := prop.Value
+		if strings.Contains(prodID, "Google") {
+			prodID = "Google Calendar"
+		} else if strings.Contains(prodID, "Microsoft") || strings.Contains(prodID, "Outlook") {
+			prodID = "Microsoft Outlook"
+		} else if strings.Contains(prodID, "Apple") {
+			prodID = "Apple Calendar"
+		}
+		descParts = append(descParts, fmt.Sprintf("Created by: %s", prodID))
+	}
+
+	// Add version if available
+	if prop := cal.Props.Get("VERSION"); prop != nil && prop.Value != "" {
+		descParts = append(descParts, fmt.Sprintf("iCal Version: %s", prop.Value))
+	}
+
+	// Count events
+	eventCount := 0
+	for _, child := range cal.Children {
+		if child.Name == "VEVENT" {
+			eventCount++
+		}
+	}
+	if eventCount > 0 {
+		descParts = append(descParts, fmt.Sprintf("Contains %d events", eventCount))
+	}
+
+	// Add source information
+	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
+		if u, err := url.Parse(source); err == nil {
+			descParts = append(descParts, fmt.Sprintf("Source: %s", u.Host))
+		}
+	} else {
+		descParts = append(descParts, fmt.Sprintf("Source: Local file (%s)", filepath.Base(source)))
+	}
+
+	// Join all parts with newlines for a nice formatted description
+	if len(descParts) > 0 {
+		return strings.Join(descParts, "\n")
+	}
+
+	// Fallback to original behavior if no properties found
+	return fmt.Sprintf("Imported from: %s", source)
+}
 
 // expandRecurringEvent expands a recurring event into individual events based on RRULE
 func expandRecurringEvent(baseEvent *models.Event, component *ical.Component, maxOccurrences int) ([]*models.Event, error) {
