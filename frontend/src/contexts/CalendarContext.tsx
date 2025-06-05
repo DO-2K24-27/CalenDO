@@ -29,15 +29,45 @@ interface CalendarContextType {
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
+const CALENDAR_VIEW_STORAGE_KEY = 'calendo-calendar-view';
+const SELECTED_PLANNINGS_STORAGE_KEY = 'calendo-selected-plannings';
+
+// Helper function to get initial view from localStorage
+const getInitialView = (): CalendarViewType => {
+  try {
+    const savedView = localStorage.getItem(CALENDAR_VIEW_STORAGE_KEY);
+    if (savedView && ['month', 'week', 'day'].includes(savedView)) {
+      return savedView as CalendarViewType;
+    }
+  } catch (error) {
+    console.warn('Failed to load calendar view from localStorage:', error);
+  }
+  return 'month'; // Default fallback
+};
+
+// Helper function to get initial selected plannings from localStorage
+const getInitialSelectedPlannings = (): Planning[] => {
+  try {
+    const savedPlannings = localStorage.getItem(SELECTED_PLANNINGS_STORAGE_KEY);
+    if (savedPlannings) {
+      const parsed = JSON.parse(savedPlannings);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (error) {
+    console.warn('Failed to load selected plannings from localStorage:', error);
+  }
+  return []; // Default fallback
+};
+
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [plannings, setPlannings] = useState<Planning[]>([]);
-  const [selectedPlannings, setSelectedPlannings] = useState<Planning[]>([]);
+  const [selectedPlannings, setSelectedPlannings] = useState<Planning[]>(getInitialSelectedPlannings());
   const [currentPlanning, setCurrentPlanning] = useState<Planning | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [view, setView] = useState<CalendarViewType>('month');
+  const [view, setView] = useState<CalendarViewType>(getInitialView());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     keyword: '',
@@ -50,6 +80,13 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
       const newSelection = isSelected 
         ? prev.filter(p => p.id !== planning.id)
         : [...prev, planning];
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem(SELECTED_PLANNINGS_STORAGE_KEY, JSON.stringify(newSelection));
+      } catch (error) {
+        console.warn('Failed to save selected plannings to localStorage:', error);
+      }
       
       // Update currentPlanning for backward compatibility
       if (newSelection.length === 0) {
@@ -66,14 +103,39 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const selectAllPlannings = () => {
-    setSelectedPlannings([...plannings]);
+    const allPlannings = [...plannings];
+    setSelectedPlannings(allPlannings);
     setCurrentPlanning(plannings.length > 0 ? plannings[0] : null);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(SELECTED_PLANNINGS_STORAGE_KEY, JSON.stringify(allPlannings));
+    } catch (error) {
+      console.warn('Failed to save selected plannings to localStorage:', error);
+    }
   };
 
   const clearPlanningSelection = () => {
     setSelectedPlannings([]);
     setCurrentPlanning(null);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(SELECTED_PLANNINGS_STORAGE_KEY, JSON.stringify([]));
+    } catch (error) {
+      console.warn('Failed to save selected plannings to localStorage:', error);
+    }
   };
+
+  // Enhanced setSelectedPlannings function that persists to localStorage
+  const handleSetSelectedPlannings = React.useCallback((plannings: Planning[]) => {
+    setSelectedPlannings(plannings);
+    try {
+      localStorage.setItem(SELECTED_PLANNINGS_STORAGE_KEY, JSON.stringify(plannings));
+    } catch (error) {
+      console.warn('Failed to save selected plannings to localStorage:', error);
+    }
+  }, []);
 
   // Keep backward compatibility with currentPlanning
   const handleSetCurrentPlanning = (planning: Planning | null) => {
@@ -89,20 +151,36 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     try {
       const data = await api.getPlannings();
       // Ensure we always have an array, even if API returns null
-      setPlannings(Array.isArray(data) ? data : []);
+      const fetchedPlannings = Array.isArray(data) ? data : [];
+      setPlannings(fetchedPlannings);
       
-      // Only initialize selected plannings on first load if none are selected
-      // and don't force selection - let user choose to see all events or select specific plannings
-      if (selectedPlannings.length === 0 && Array.isArray(data) && data.length > 0) {
-        // Start with all events visible (no planning selected)
-        // User can then choose to filter by specific plannings
+      // Restore selected plannings from localStorage if they exist in the fetched plannings
+      if (fetchedPlannings.length > 0) {
+        const savedSelections = getInitialSelectedPlannings();
+        if (savedSelections.length > 0) {
+          // Filter saved selections to only include plannings that still exist
+          const validSelections = savedSelections.filter(savedPlanning => 
+            fetchedPlannings.some(planning => planning.id === savedPlanning.id)
+          );
+          
+          if (validSelections.length > 0) {
+            // Update the selections with fresh data from the API
+            const restoredSelections = validSelections.map(savedPlanning => 
+              fetchedPlannings.find(planning => planning.id === savedPlanning.id)!
+            );
+            setSelectedPlannings(restoredSelections);
+            
+            // Update currentPlanning for backward compatibility
+            setCurrentPlanning(restoredSelections[0]);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch plannings:', err);
       // Set empty array on error to ensure consistent state
       setPlannings([]);
     }
-  }, [selectedPlannings.length]);
+  }, []);
 
   const refreshEvents = React.useCallback(async () => {
     setIsLoading(true);
@@ -136,6 +214,16 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     return events.filter(event => selectedPlanningIds.includes(event.planning_id));
   }, [events, selectedPlannings]);
 
+  // Enhanced setView function that persists to localStorage
+  const handleSetView = React.useCallback((newView: CalendarViewType) => {
+    setView(newView);
+    try {
+      localStorage.setItem(CALENDAR_VIEW_STORAGE_KEY, newView);
+    } catch (error) {
+      console.warn('Failed to save calendar view to localStorage:', error);
+    }
+  }, []);
+
   const value = {
     events,
     filteredEvents,
@@ -149,11 +237,11 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     selectedEvent,
     searchFilters,
     setCurrentDate,
-    setView,
+    setView: handleSetView,
     setSelectedEvent,
     setSearchFilters,
     setCurrentPlanning: handleSetCurrentPlanning,
-    setSelectedPlannings,
+    setSelectedPlannings: handleSetSelectedPlannings,
     togglePlanningSelection,
     selectAllPlannings,
     clearPlanningSelection,
