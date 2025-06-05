@@ -32,6 +32,28 @@ jobs:
         run: |
           go install github.com/swaggo/swag/cmd/swag@latest
           swag init -g api/main.go -o docs
+
+  build-and-test-ical-importer:
+    runs-on: github-runner-do
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Install dependencies
+        working-directory: ./ical-importer
+        run: go mod download
+
+      - name: Build
+        working-directory: ./ical-importer
+        run: go build -v
+
+      - name: Test
+        working-directory: ./ical-importer
+        run: go test -v ./...
   
   build-and-test-frontend:
     runs-on: github-runner-do
@@ -94,6 +116,43 @@ jobs:
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:latest
 
+  docker-ical-importer:
+    needs: [build-and-test-ical-importer]
+    runs-on: github-runner-do
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.8.1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push iCal Importer Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ical-importer
+          push: true
+          tags: |
+            ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+
+      - name: Keyless signing of iCal Importer Docker image
+        run: |
+          export COSIGN_EXPERIMENTAL=1
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+
   docker-frontend:
     needs: [build-and-test-frontend]
     runs-on: github-runner-do
@@ -132,7 +191,7 @@ jobs:
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
 
   deploy:
-    needs: [docker-backend, docker-frontend]
+    needs: [docker-backend, docker-frontend, docker-ical-importer]
     runs-on: github-runner-do
     steps:
       - uses: actions/checkout@v4
@@ -158,5 +217,8 @@ jobs:
             --set frontend.image.repository=${{ vars.REGISTRY_URL }}/calendo-frontend \
             --set frontend.image.tag=${{ github.sha }} \
             --set frontend.image.pullPolicy=IfNotPresent \
+            --set icalImporter.image.repository=${{ vars.REGISTRY_URL }}/calendo-ical-importer \
+            --set icalImporter.image.tag=${{ github.sha }} \
+            --set icalImporter.image.pullPolicy=IfNotPresent \
             --namespace hugo-calendo --create-namespace \
             --wait --timeout 15m
