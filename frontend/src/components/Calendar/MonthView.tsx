@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { 
   getDaysInMonth, 
@@ -7,6 +7,7 @@ import {
 } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import EventCard from '../Event/EventCard';
+import { Event } from '../../types';
 
 const MonthView: React.FC = () => {
   const { 
@@ -16,6 +17,10 @@ const MonthView: React.FC = () => {
     searchFilters
   } = useCalendar();
 
+  const [showMoreEventsModal, setShowMoreEventsModal] = useState(false);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
   const year = currentDate.getFullYear();
@@ -23,6 +28,18 @@ const MonthView: React.FC = () => {
   
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
+  
+  const handleShowMoreEvents = (date: Date, events: Event[]) => {
+    setSelectedDate(date);
+    setSelectedDayEvents(events);
+    setShowMoreEventsModal(true);
+  };
+  
+  const handleCloseModal = () => {
+    setShowMoreEventsModal(false);
+    setSelectedDayEvents([]);
+    setSelectedDate(null);
+  };
   
   const renderDays = () => {
     const days = [];
@@ -73,9 +90,12 @@ const MonthView: React.FC = () => {
               />
             ))}
             {dayEvents.length > 3 && (
-              <div className="text-xs text-gray-500 mt-1 text-center">
+              <button
+                onClick={() => handleShowMoreEvents(date, dayEvents.slice(3))}
+                className="text-xs text-purple-600 hover:text-purple-800 mt-1 text-center w-full hover:bg-purple-50 rounded py-1 transition-colors duration-200"
+              >
                 +{dayEvents.length - 3} more
-              </div>
+              </button>
             )}
           </div>
         </div>
@@ -102,18 +122,67 @@ const MonthView: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-sm font-medium text-gray-500">
-            {day}
+    <>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-sm font-medium text-gray-500">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7">
+          {renderDays()}
+        </div>
+      </div>
+
+      {/* More Events Modal */}
+      {showMoreEventsModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={handleCloseModal}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedDate && selectedDate.toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-2">
+                {selectedDayEvents.map(event => (
+                  <EventCard 
+                    key={event.uid} 
+                    event={event} 
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      handleCloseModal();
+                    }}
+                    compact={false}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7">
-        {renderDays()}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 
