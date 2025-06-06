@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { 
   getDaysInMonth, 
@@ -17,9 +17,9 @@ const MonthView: React.FC = () => {
     searchFilters
   } = useCalendar();
 
-  const [showMoreEventsModal, setShowMoreEventsModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState<string | null>(null);
   const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{top: number, left: number, width: number}>({top: 0, left: 0, width: 0});
 
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
@@ -29,18 +29,66 @@ const MonthView: React.FC = () => {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
   
-  const handleShowMoreEvents = (date: Date, events: Event[]) => {
-    setSelectedDate(date);
-    setSelectedDayEvents(events);
-    setShowMoreEventsModal(true);
+  const handleShowMoreEvents = (dateStr: string, events: Event[], buttonElement: HTMLElement) => {
+    if (showDropdown === dateStr) {
+      setShowDropdown(null);
+      setSelectedDayEvents([]);
+    } else {
+      const updatePosition = () => {
+        const calendarCell = buttonElement.closest('.calendar-cell') as HTMLElement;
+        const cellRect = calendarCell.getBoundingClientRect();
+        const buttonRect = buttonElement.getBoundingClientRect();
+        setDropdownPosition({
+          top: buttonRect.bottom + 2,
+          left: cellRect.left,
+          width: cellRect.width
+        });
+      };
+      
+      updatePosition();
+      setSelectedDayEvents(events);
+      setShowDropdown(dateStr);
+    }
   };
-  
-  const handleCloseModal = () => {
-    setShowMoreEventsModal(false);
-    setSelectedDayEvents([]);
-    setSelectedDate(null);
-  };
-  
+
+  // Close dropdown when clicking outside and update position on scroll
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDropdown && !(event.target as Element).closest('.dropdown-container')) {
+        setShowDropdown(null);
+        setSelectedDayEvents([]);
+      }
+    };
+
+    const handleScroll = () => {
+      if (showDropdown) {
+        const buttonElement = document.querySelector(`[data-date="${showDropdown}"] button`) as HTMLElement;
+        if (buttonElement) {
+          const calendarCell = buttonElement.closest('.calendar-cell') as HTMLElement;
+          const cellRect = calendarCell.getBoundingClientRect();
+          const buttonRect = buttonElement.getBoundingClientRect();
+          setDropdownPosition({
+            top: buttonRect.bottom + 2,
+            left: cellRect.left,
+            width: cellRect.width
+          });
+        }
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll);
+      window.addEventListener('resize', handleScroll);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [showDropdown]);
+
   const renderDays = () => {
     const days = [];
     const today = new Date();
@@ -60,6 +108,7 @@ const MonthView: React.FC = () => {
     // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
+      const dateStr = `${year}-${month}-${day}`;
       const isToday = isSameDay(date, today);
       
       // Get events for this day
@@ -75,6 +124,7 @@ const MonthView: React.FC = () => {
       days.push(
         <div 
           key={`day-${day}`} 
+          data-date={dateStr}
           className={`calendar-cell p-1 border border-gray-100 ${
             isToday ? 'bg-purple-50' : 'bg-white'
           }`}
@@ -94,12 +144,38 @@ const MonthView: React.FC = () => {
               />
             ))}
             {dayEvents.length > 3 && (
-              <button
-                onClick={() => handleShowMoreEvents(date, dayEvents.slice(3))}
-                className="text-xs text-purple-600 hover:text-purple-800 mt-1 text-center w-full hover:bg-purple-50 rounded py-1 transition-colors duration-200"
-              >
-                +{dayEvents.length - 3} more
-              </button>
+              <div className="dropdown-container relative">
+                <button
+                  onClick={(e) => handleShowMoreEvents(dateStr, dayEvents.slice(3), e.currentTarget)}
+                  className="text-xs text-purple-600 hover:text-purple-800 mt-1 text-center w-full hover:bg-purple-50 rounded py-1 transition-colors duration-200"
+                >
+                  +{dayEvents.length - 3} more
+                </button>
+                {showDropdown === dateStr && (
+                  <div 
+                    className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    style={{
+                      top: `${dropdownPosition.top}px`,
+                      left: `${dropdownPosition.left}px`,
+                      width: `${dropdownPosition.width}px`
+                    }}
+                  >
+                    <div className="p-2 space-y-1">
+                      {selectedDayEvents.map(event => (
+                        <EventCard 
+                          key={event.uid} 
+                          event={event} 
+                          onClick={() => {
+                            setSelectedEvent(event);
+                            setShowDropdown(null);
+                          }}
+                          compact={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -126,67 +202,18 @@ const MonthView: React.FC = () => {
   };
   
   return (
-    <>
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-sm font-medium text-gray-500">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {renderDays()}
-        </div>
-      </div>
-
-      {/* More Events Modal */}
-      {showMoreEventsModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={handleCloseModal}
-        >
-          <div 
-            className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {selectedDate && selectedDate.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </h3>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto max-h-[60vh]">
-              <div className="space-y-2">
-                {selectedDayEvents.map(event => (
-                  <EventCard 
-                    key={event.uid} 
-                    event={event} 
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      handleCloseModal();
-                    }}
-                    compact={false}
-                  />
-                ))}
-              </div>
-            </div>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="text-sm font-medium text-gray-500">
+            {day}
           </div>
-        </div>
-      )}
-    </>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {renderDays()}
+      </div>
+    </div>
   );
 };
 
