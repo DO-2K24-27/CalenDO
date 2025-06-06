@@ -63,10 +63,14 @@ const MonthView: React.FC = () => {
       const isToday = isSameDay(date, today);
       
       // Get events for this day
-      const dayEvents = searchFilteredEvents.filter(event => {
-        const eventStart = new Date(event.start_time);
-        return isSameDay(eventStart, date);
-      });
+      const dayEvents = searchFilteredEvents
+        .filter(event => {
+          const eventStart = new Date(event.start_time);
+          return isSameDay(eventStart, date);
+        })
+        .sort((a, b) => 
+          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+        );
       
       days.push(
         <div 
