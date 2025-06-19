@@ -1,11 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, WifiOff } from 'lucide-react';
 import { useCalendar } from '../../contexts/CalendarContext';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import { PlanningMultiSelector } from '../Planning/PlanningMultiSelector';
+import InstallButton from '../PWA/InstallButton';
 
 const Header: React.FC = () => {
   const { view, setView } = useCalendar();
+  const isOnline = useOnlineStatus();
   
   return (
     <header className="bg-purple-700 text-white shadow-md">
@@ -17,6 +20,13 @@ const Header: React.FC = () => {
           </Link>
           
           <div className="flex items-center space-x-6">
+            {!isOnline && (
+              <div className="flex items-center space-x-1 text-red-300">
+                <WifiOff size={16} />
+                <span className="text-sm font-medium">Offline</span>
+              </div>
+            )}
+            
             <nav className="hidden md:flex space-x-4">
               <button
                 onClick={() => setView('month')}
@@ -43,6 +53,8 @@ const Header: React.FC = () => {
                 Day
               </button>
             </nav>
+            
+            <InstallButton />
             
             <Link 
               to="/countdown" 

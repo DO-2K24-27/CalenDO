@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Event, Planning, CalendarViewType, SearchFilters } from '../types';
-import { api } from '../services/api';
+import { useEvents, usePlannings } from '../hooks/useApiData';
 
 interface CalendarContextType {
   events: Event[];
@@ -60,12 +60,23 @@ const getInitialSelectedPlannings = (): Planning[] => {
 };
 
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [plannings, setPlannings] = useState<Planning[]>([]);
+  // Use cached data hooks
+  const { 
+    data: events = [], 
+    loading: eventsLoading, 
+    error: eventsError, 
+    refresh: refreshEventsData
+  } = useEvents();
+  
+  const { 
+    data: plannings = [], 
+    loading: planningsLoading, 
+    error: planningsError, 
+    refresh: refreshPlanningsData
+  } = usePlannings();
+
   const [selectedPlannings, setSelectedPlannings] = useState<Planning[]>(getInitialSelectedPlannings());
   const [currentPlanning, setCurrentPlanning] = useState<Planning | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarViewType>(getInitialView());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -73,6 +84,12 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     keyword: '',
     field: 'all'
   });
+
+  // Combine loading states
+  const isLoading = eventsLoading || planningsLoading;
+  
+  // Combine error states
+  const error = eventsError?.message || planningsError?.message || null;
 
   const togglePlanningSelection = (planning: Planning) => {
     setSelectedPlannings(prev => {
@@ -103,9 +120,9 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const selectAllPlannings = () => {
-    const allPlannings = [...plannings];
+    const allPlannings = plannings || [];
     setSelectedPlannings(allPlannings);
-    setCurrentPlanning(plannings.length > 0 ? plannings[0] : null);
+    setCurrentPlanning(allPlannings.length > 0 ? allPlannings[0] : null);
     
     // Save to localStorage
     try {
@@ -147,72 +164,14 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const refreshPlannings = React.useCallback(async () => {
-    try {
-      const data = await api.getPlannings();
-      // Ensure we always have an array, even if API returns null
-      const fetchedPlannings = Array.isArray(data) ? data : [];
-      setPlannings(fetchedPlannings);
-      
-      // Restore selected plannings from localStorage if they exist in the fetched plannings
-      if (fetchedPlannings.length > 0) {
-        const savedSelections = getInitialSelectedPlannings();
-        if (savedSelections.length > 0) {
-          // Filter saved selections to only include plannings that still exist
-          const validSelections = savedSelections.filter(savedPlanning => 
-            fetchedPlannings.some(planning => planning.id === savedPlanning.id)
-          );
-          
-          if (validSelections.length > 0) {
-            // Update the selections with fresh data from the API
-            const restoredSelections = validSelections.map(savedPlanning => 
-              fetchedPlannings.find(planning => planning.id === savedPlanning.id)!
-            );
-            setSelectedPlannings(restoredSelections);
-            
-            // Update currentPlanning for backward compatibility
-            setCurrentPlanning(restoredSelections[0]);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch plannings:', err);
-      // Set empty array on error to ensure consistent state
-      setPlannings([]);
-    }
-  }, []);
-
+  // Wrap refresh functions
   const refreshEvents = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await api.getEvents();
-      // Ensure we always have an array, even if API returns null
-      setEvents(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError('Failed to fetch events. Please try again later.');
-      console.error(err);
-      // Set empty array on error to ensure consistent state
-      setEvents([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    await refreshEventsData();
+  }, [refreshEventsData]);
 
-  useEffect(() => {
-    const initializeData = async () => {
-      await Promise.all([refreshPlannings(), refreshEvents()]);
-    };
-    initializeData();
-  }, [refreshPlannings, refreshEvents]);
-
-  // Filter events based on selected plannings
-  const filteredEvents = React.useMemo(() => {
-    // If no plannings are selected, show all events
-    if (selectedPlannings.length === 0) return events;
-    const selectedPlanningIds = selectedPlannings.map(p => p.id);
-    return events.filter(event => selectedPlanningIds.includes(event.planning_id));
-  }, [events, selectedPlannings]);
+  const refreshPlannings = React.useCallback(async () => {
+    await refreshPlanningsData();
+  }, [refreshPlanningsData]);
 
   // Enhanced setView function that persists to localStorage
   const handleSetView = React.useCallback((newView: CalendarViewType) => {
@@ -224,10 +183,19 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // Filter events based on selected plannings
+  const filteredEvents = React.useMemo(() => {
+    const eventsArray = events || [];
+    // If no plannings are selected, show all events
+    if (selectedPlannings.length === 0) return eventsArray;
+    const selectedPlanningIds = selectedPlannings.map(p => p.id);
+    return eventsArray.filter(event => selectedPlanningIds.includes(event.planning_id));
+  }, [events, selectedPlannings]);
+
   const value = {
-    events,
+    events: events || [],
     filteredEvents,
-    plannings,
+    plannings: plannings || [],
     selectedPlannings,
     currentPlanning,
     isLoading,
