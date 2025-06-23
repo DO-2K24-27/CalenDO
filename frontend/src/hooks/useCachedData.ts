@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { cachedApi } from '../services/cachedApi';
 import { useOnlineStatus } from './useOnlineStatus';
 
@@ -26,7 +26,7 @@ export const useCachedData = <T>(
   const [error, setError] = useState<Error | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isStale, setIsStale] = useState(false);
-  const [lastFetchAttempt, setLastFetchAttempt] = useState<number>(0);
+  const lastFetchAttemptRef = useRef<number>(0);
   
   const isOnline = useOnlineStatus();
 
@@ -37,12 +37,12 @@ export const useCachedData = <T>(
     const now = Date.now();
     
     // Rate limiting: prevent too frequent API calls
-    if (!forceRefresh && (now - lastFetchAttempt) < MIN_FETCH_INTERVAL) {
+    if (!forceRefresh && (now - lastFetchAttemptRef.current) < MIN_FETCH_INTERVAL) {
       console.log(`Skipping fetch for ${cacheKey} due to rate limiting`);
       return;
     }
     
-    setLastFetchAttempt(now);
+    lastFetchAttemptRef.current = now;
 
     // If offline and not forcing refresh, try to use cached data first
     if (!isOnline && !forceRefresh) {
@@ -89,7 +89,7 @@ export const useCachedData = <T>(
     } finally {
       setLoading(false);
     }
-  }, [fetchFunction, cacheKey, isOnline, lastFetchAttempt, MIN_FETCH_INTERVAL]);
+  }, [fetchFunction, cacheKey, isOnline]);
 
   const refresh = useCallback(() => {
     return fetchData(true);
