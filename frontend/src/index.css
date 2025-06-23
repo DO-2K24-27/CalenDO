@@ -39,13 +39,65 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .calendar-cell {
-  aspect-ratio: 1 / 1;
   min-height: 100px;
 }
 
+/* Mobile-specific dropdown styling */
 @media (max-width: 768px) {
   .calendar-cell {
-    min-height: 80px;
+    min-height: 80px; /* Slightly larger minimum on mobile */
+  }
+  
+  /* Allow calendar cells to expand vertically on mobile when they have events */
+  .calendar-cell.has-events {
+    min-height: auto;
+    height: auto;
+  }
+  
+  /* Make the month grid flexible on mobile - remove fixed heights */
+  .monthly-calendar-grid {
+    grid-template-rows: repeat(6, minmax(80px, auto));
+    overflow: visible;
+  }
+  
+  /* Ensure the calendar container can expand and doesn't clip dropdowns */
+  .calendar-container {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  .calendar-main-container {
+    overflow: visible !important;
+  }
+  
+  /* Mobile dropdown improvements - smart positioning */
+  .mobile-dropdown {
+    min-width: 250px;
+    width: 250px;
+  }
+  
+  /* Dropdown positioning for different cell positions */
+  .dropdown-left {
+    left: 0;
+    right: auto;
+  }
+  
+  .dropdown-right {
+    right: 0;
+    left: auto;
+  }
+  
+  .dropdown-center {
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+  }
+  
+  /* Ensure dropdown doesn't go off screen */
+  .dropdown-container {
+    position: relative;
+    overflow: visible;
   }
 }
 
