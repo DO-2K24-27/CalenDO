@@ -40,18 +40,26 @@ export const usePWA = () => {
     // Check for service worker updates
     const checkForUpdates = async () => {
       if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration) {
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  setIsUpdateAvailable(true);
-                }
-              });
-            }
-          });
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    setIsUpdateAvailable(true);
+                  }
+                });
+              }
+            });
+
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              setIsUpdateAvailable(true);
+            });
+          }
+        } catch (error) {
+          console.error('Error checking for updates:', error);
         }
       }
     };
@@ -80,14 +88,7 @@ export const usePWA = () => {
   };
 
   const updateApp = () => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((registration) => {
-        if (registration && registration.waiting) {
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          window.location.reload();
-        }
-      });
-    }
+    window.location.reload();
   };
 
   return {
