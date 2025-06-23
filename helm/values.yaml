@@ -268,8 +268,8 @@ icalImporter:
   
   # Cron job configuration
   cronjob:
-    # Run every 30 minutes
-    schedule: "0 1 * * *"
+    # Run every hour
+    schedule: "0 * * * *"
     # Keep last 3 successful jobs and 1 failed job
     successfulJobsHistoryLimit: 3
     failedJobsHistoryLimit: 1
