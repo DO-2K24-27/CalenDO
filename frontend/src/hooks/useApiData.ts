@@ -1,11 +1,14 @@
 import { useCachedData } from './useCachedData';
 import { cachedApi } from '../services/cachedApi';
 import { Event, Planning } from '../types';
+import { useCallback } from 'react';
 
 // Hook for events data
 export const useEvents = () => {
+  const fetchEvents = useCallback(() => cachedApi.getEvents(), []);
+  
   return useCachedData<Event[]>(
-    () => cachedApi.getEvents(),
+    fetchEvents,
     'events',
     {
       autoRefresh: true,
@@ -18,8 +21,10 @@ export const useEvents = () => {
 
 // Hook for plannings data
 export const usePlannings = () => {
+  const fetchPlannings = useCallback(() => cachedApi.getPlannings(), []);
+  
   return useCachedData<Planning[]>(
-    () => cachedApi.getPlannings(),
+    fetchPlannings,
     'plannings',
     {
       autoRefresh: true,
@@ -32,8 +37,10 @@ export const usePlannings = () => {
 
 // Hook for specific event
 export const useEvent = (uid: string) => {
+  const fetchEvent = useCallback(() => cachedApi.getEventByUid(uid), [uid]);
+  
   return useCachedData<Event>(
-    () => cachedApi.getEventByUid(uid),
+    fetchEvent,
     `event_${uid}`,
     {
       refreshOnWindowFocus: false,
@@ -44,8 +51,10 @@ export const useEvent = (uid: string) => {
 
 // Hook for specific planning
 export const usePlanning = (id: string) => {
+  const fetchPlanning = useCallback(() => cachedApi.getPlanningById(id), [id]);
+  
   return useCachedData<Planning>(
-    () => cachedApi.getPlanningById(id),
+    fetchPlanning,
     `planning_${id}`,
     {
       refreshOnWindowFocus: false,
@@ -56,8 +65,10 @@ export const usePlanning = (id: string) => {
 
 // Hook for default planning
 export const useDefaultPlanning = () => {
+  const fetchDefaultPlanning = useCallback(() => cachedApi.getDefaultPlanning(), []);
+  
   return useCachedData<Planning>(
-    () => cachedApi.getDefaultPlanning(),
+    fetchDefaultPlanning,
     'default_planning',
     {
       autoRefresh: true,
@@ -70,8 +81,10 @@ export const useDefaultPlanning = () => {
 
 // Hook for API health
 export const useApiHealth = () => {
+  const fetchHealth = useCallback(() => cachedApi.checkHealth(), []);
+  
   return useCachedData<{ status: string }>(
-    () => cachedApi.checkHealth(),
+    fetchHealth,
     'health',
     {
       autoRefresh: true,
