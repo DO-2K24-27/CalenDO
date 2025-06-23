@@ -5,8 +5,33 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test-backend:
+  # Detect changes in each project
+  detect-changes:
     runs-on: github-runner-do
+    outputs:
+      backend-changed: ${{ steps.changes.outputs.backend }}
+      frontend-changed: ${{ steps.changes.outputs.frontend }}
+      ical-importer-changed: ${{ steps.changes.outputs.ical-importer }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+            ical-importer:
+              - 'ical-importer/**'
+
+  build-and-test-backend:
+    needs: detect-changes
+    runs-on: github-runner-do
+    if: needs.detect-changes.outputs.backend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +59,9 @@ jobs:
           swag init -g api/main.go -o docs
 
   build-and-test-ical-importer:
+    needs: detect-changes
     runs-on: github-runner-do
+    if: needs.detect-changes.outputs.ical-importer-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -56,7 +83,9 @@ jobs:
         run: go test -v ./...
   
   build-and-test-frontend:
+    needs: detect-changes
     runs-on: github-runner-do
+    if: needs.detect-changes.outputs.frontend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -80,8 +109,9 @@ jobs:
         run: npm run build
 
   docker-backend:
-    needs: [build-and-test-backend]
+    needs: [detect-changes, build-and-test-backend]
     runs-on: github-runner-do
+    if: always() && !cancelled() && !failure()
     permissions:
       contents: read
       id-token: write
@@ -101,7 +131,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # Build and push new image if there are changes
       - name: Build and push Backend Docker image
+        if: needs.detect-changes.outputs.backend-changed == 'true' && (needs.build-and-test-backend.result == 'success' || needs.build-and-test-backend.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -110,15 +142,29 @@ jobs:
             ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
             ${{ vars.REGISTRY_URL }}/calendo-backend:latest
 
+      # Just tag existing latest image with current commit SHA if no changes
+      - name: Tag existing Backend Docker image
+        if: needs.detect-changes.outputs.backend-changed == 'false'
+        run: |
+          # Pull latest image
+          docker pull ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+          # Tag it with current commit SHA
+          docker tag ${{ vars.REGISTRY_URL }}/calendo-backend:latest ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+          # Push the new tag
+          docker push ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+
       - name: Keyless signing of Backend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+          if [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
+            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+          fi
 
   docker-ical-importer:
-    needs: [build-and-test-ical-importer]
+    needs: [detect-changes, build-and-test-ical-importer]
     runs-on: github-runner-do
+    if: always() && !cancelled() && !failure()
     permissions:
       contents: read
       id-token: write
@@ -138,7 +184,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # Build and push new image if there are changes
       - name: Build and push iCal Importer Docker image
+        if: needs.detect-changes.outputs.ical-importer-changed == 'true' && (needs.build-and-test-ical-importer.result == 'success' || needs.build-and-test-ical-importer.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./ical-importer
@@ -147,15 +195,29 @@ jobs:
             ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
             ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
 
+      # Just tag existing latest image with current commit SHA if no changes
+      - name: Tag existing iCal Importer Docker image
+        if: needs.detect-changes.outputs.ical-importer-changed == 'false'
+        run: |
+          # Pull latest image
+          docker pull ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+          # Tag it with current commit SHA
+          docker tag ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+          # Push the new tag
+          docker push ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+
       - name: Keyless signing of iCal Importer Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+          if [ "${{ needs.detect-changes.outputs.ical-importer-changed }}" == "true" ]; then
+            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+          fi
 
   docker-frontend:
-    needs: [build-and-test-frontend]
+    needs: [detect-changes, build-and-test-frontend]
     runs-on: github-runner-do
+    if: always() && !cancelled() && !failure()
     permissions:
       contents: read
       id-token: write
@@ -175,7 +237,9 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # Build and push new image if there are changes
       - name: Build and push Frontend Docker image
+        if: needs.detect-changes.outputs.frontend-changed == 'true' && (needs.build-and-test-frontend.result == 'success' || needs.build-and-test-frontend.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -184,14 +248,28 @@ jobs:
             ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
             ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
 
+      # Just tag existing latest image with current commit SHA if no changes
+      - name: Tag existing Frontend Docker image
+        if: needs.detect-changes.outputs.frontend-changed == 'false'
+        run: |
+          # Pull latest image
+          docker pull ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+          # Tag it with current commit SHA
+          docker tag ${{ vars.REGISTRY_URL }}/calendo-frontend:latest ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+          # Push the new tag
+          docker push ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+
       - name: Keyless signing of Frontend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+          if [ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" ]; then
+            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+          fi
 
   deploy:
     needs: [docker-backend, docker-frontend, docker-ical-importer]
+    if: always() && !cancelled() && !failure()
     runs-on: github-runner-do
     steps:
       - uses: actions/checkout@v4
