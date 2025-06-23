@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
+import { formatTextForDisplay } from '../../utils/textUtils';
 
 export const PlanningMultiSelector = () => {
   const { 
@@ -142,7 +143,7 @@ export const PlanningMultiSelector = () => {
                     </div>
                     {planning.description && (
                       <div className="text-xs text-gray-500 leading-relaxed whitespace-pre-line">
-                        {planning.description}
+                        {formatTextForDisplay(planning.description)}
                       </div>
                     )}
                   </div>

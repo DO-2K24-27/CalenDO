@@ -1,5 +1,6 @@
 import { Event, SearchFilters } from '../types';
 import React from 'react';
+import { formatTextForDisplay } from './textUtils';
 
 export const filterEvents = (events: Event[], filters: SearchFilters): Event[] => {
   if (!filters.keyword) return events;
@@ -10,13 +11,13 @@ export const filterEvents = (events: Event[], filters: SearchFilters): Event[] =
     if (filters.field === 'all') {
       return (
         event.summary.toLowerCase().includes(keyword) ||
-        event.description.toLowerCase().includes(keyword) ||
+        formatTextForDisplay(event.description).toLowerCase().includes(keyword) ||
         event.location.toLowerCase().includes(keyword)
       );
     } else if (filters.field === 'summary') {
       return event.summary.toLowerCase().includes(keyword);
     } else if (filters.field === 'description') {
-      return event.description.toLowerCase().includes(keyword);
+      return formatTextForDisplay(event.description).toLowerCase().includes(keyword);
     } else if (filters.field === 'location') {
       return event.location.toLowerCase().includes(keyword);
     }
