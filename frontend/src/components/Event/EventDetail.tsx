@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, MapPin, Calendar, Clock } from 'lucide-react';
 import { Event } from '../../types';
 import { formatDate, formatTime } from '../../utils/dateUtils';
+import { formatTextForDisplay } from '../../utils/textUtils';
 import { useCalendar } from '../../contexts/CalendarContext';
 
 interface EventDetailProps {
@@ -70,7 +71,7 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
                 <div className="font-medium">Planning</div>
                 <div className="text-gray-600">{eventPlanning.name}</div>
                 {eventPlanning.description && (
-                  <div className="text-sm text-gray-500">{eventPlanning.description}</div>
+                  <div className="text-sm text-gray-500 whitespace-pre-line">{formatTextForDisplay(eventPlanning.description)}</div>
                 )}
               </div>
             </div>
@@ -97,7 +98,7 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
           {event.description && (
             <div className="mb-4">
               <h4 className="font-medium mb-2">Description</h4>
-              <p className="text-gray-600 whitespace-pre-line">{event.description}</p>
+              <p className="text-gray-600 whitespace-pre-line">{formatTextForDisplay(event.description)}</p>
             </div>
           )}
           
