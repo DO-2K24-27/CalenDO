@@ -91,36 +91,29 @@ h1, h2, h3, h4, h5, h6 {
   to { transform: translateY(-10px); opacity: 0; }
 }
 
-/* Calendar-specific styles */
-.calendar-grid {
-  position: relative;
+/* Slide animations for calendar swipe gestures */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
-.time-slot {
-  position: relative;
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
-.time-slot::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(to right, rgba(156, 163, 175, 0.3) 0%, rgba(156, 163, 175, 0.1) 100%);
+.swipe-animation-right {
+  animation: slideInRight 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.event-card.compact {
-  font-size: 0.75rem;
-  line-height: 1.2;
-}
-
-.event-card.compact:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-/* Smooth scrolling for calendar views */
-.calendar-view {
-  scroll-behavior: smooth;
+.swipe-animation-left {
+  animation: slideInLeft 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }

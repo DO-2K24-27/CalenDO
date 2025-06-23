@@ -4,6 +4,7 @@ import CalendarHeader from '../components/Calendar/CalendarHeader';
 import MonthView from '../components/Calendar/MonthView';
 import WeekView from '../components/Calendar/WeekView';
 import DayView from '../components/Calendar/DayView';
+import SwipeableCalendarContainer from '../components/Calendar/SwipeableCalendarContainer';
 import EventDetail from '../components/Event/EventDetail';
 import SearchBar from '../components/Search/SearchBar';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
@@ -62,11 +63,13 @@ const CalendarPage: React.FC = () => {
           description="You haven't created any events yet."
         />
       ) : (
-        <div className="mb-4">
-          {view === 'month' && <MonthView />}
-          {view === 'week' && <WeekView />}
-          {view === 'day' && <DayView />}
-        </div>
+        <SwipeableCalendarContainer>
+          <div className="mb-4">
+            {view === 'month' && <MonthView />}
+            {view === 'week' && <WeekView />}
+            {view === 'day' && <DayView />}
+          </div>
+        </SwipeableCalendarContainer>
       )}
       
       {selectedEvent && (
