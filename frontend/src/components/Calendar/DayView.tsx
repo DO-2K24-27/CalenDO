@@ -32,8 +32,8 @@ const DayView: React.FC = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="grid grid-cols-24 border-b border-gray-200 py-2 bg-gray-50">
-        <div className="col-span-1 text-sm font-medium text-gray-500 text-center">Time</div>
+      <div className="grid grid-cols-24 day-view-header border-b border-gray-200 py-2 bg-gray-50">
+        <div className="col-span-1 text-sm font-medium text-gray-500 text-center day-view-time-column">Time</div>
         <div className="col-span-23 text-sm font-medium text-gray-500 text-center">Events</div>
       </div>
       
@@ -43,8 +43,8 @@ const DayView: React.FC = () => {
           const hour = startHour + index;
           const displayHour = hour >= 24 ? hour - 24 : hour; // Handle midnight rollover
           return (
-            <div key={hour} className="grid grid-cols-24 border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}>
-              <div className="col-span-1 text-xs text-gray-500 py-2 text-center border-r border-gray-100">
+            <div key={hour} className="grid grid-cols-24 day-view-grid border-t border-gray-100 first:border-t-0" style={{ height: `${HOUR_HEIGHT}px` }}>
+              <div className="col-span-1 text-xs text-gray-500 py-2 text-center border-r border-gray-100 day-view-time-column">
                 {displayHour === 0 ? '12 AM' : displayHour < 12 ? `${displayHour} AM` : displayHour === 12 ? '12 PM' : `${displayHour - 12} PM`}
               </div>
               <div className="col-span-23"></div>
@@ -54,7 +54,7 @@ const DayView: React.FC = () => {
          {/* Events positioned absolutely */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Events container with proper left margin to account for time column */}
-          <div className="relative h-full pointer-events-auto" style={{ marginLeft: 'calc(100% / 24)' }}>
+          <div className="relative h-full pointer-events-auto day-view-events-margin" style={{ marginLeft: 'calc(100% / 24)' }}>
             {/* Current time cursor */}
             <CurrentTimeCursor 
               hourHeight={HOUR_HEIGHT} 
