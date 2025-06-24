@@ -27,8 +27,8 @@ const WeekView: React.FC = () => {
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="grid grid-cols-8 text-center py-2 border-b border-gray-200 bg-gray-50">
-        <div className="text-sm font-medium text-gray-500">Time</div>
+      <div className="grid grid-cols-8 week-view-header text-center py-2 border-b border-gray-200 bg-gray-50">
+        <div className="text-sm font-medium text-gray-500 week-view-time-column">Time</div>
         {weekDays.map((day, index) => (
           <div key={index} className="text-sm font-medium text-gray-500">
             <div>{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.getDay()]}</div>
@@ -39,14 +39,14 @@ const WeekView: React.FC = () => {
         ))}
       </div>
       
-      <div className="grid grid-cols-8 divide-x divide-gray-200 relative">
+      <div className="grid grid-cols-8 week-view-grid divide-x divide-gray-200 relative">
         {/* Time column */}
         <div className="space-y-0">
           {Array.from({ length: visibleHours }).map((_, index) => {
             const hour = startHour + index;
             const displayHour = hour >= 24 ? hour - 24 : hour; // Handle midnight rollover
             return (
-              <div key={hour} className="text-xs text-gray-500 text-right pr-2 border-t border-gray-100 first:border-t-0 flex items-start pt-1" style={{ height: `${HOUR_HEIGHT}px` }}>
+              <div key={hour} className="text-xs text-gray-500 text-right pr-2 border-t border-gray-100 first:border-t-0 flex items-start pt-1 week-view-time-column" style={{ height: `${HOUR_HEIGHT}px` }}>
                 {displayHour === 0 ? '12 AM' : displayHour < 12 ? `${displayHour} AM` : displayHour === 12 ? '12 PM' : `${displayHour - 12} PM`}
               </div>
             );

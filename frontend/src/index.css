@@ -99,6 +99,42 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
     overflow: visible;
   }
+
+  /* Day view mobile fixes for time column overlap */
+  .day-view-header {
+    grid-template-columns: 60px 1fr !important;
+  }
+  
+  .day-view-grid {
+    grid-template-columns: 60px 1fr !important;
+  }
+  
+  .day-view-time-column {
+    min-width: 60px !important;
+    font-size: 0.7rem !important;
+    padding: 0.25rem !important;
+    line-height: 1 !important;
+  }
+  
+  .day-view-events-margin {
+    margin-left: 60px !important;
+  }
+
+  /* Week view mobile fixes for time column overlap */
+  .week-view-header {
+    grid-template-columns: 60px repeat(7, 1fr) !important;
+  }
+  
+  .week-view-grid {
+    grid-template-columns: 60px repeat(7, 1fr) !important;
+  }
+  
+  .week-view-time-column {
+    min-width: 60px !important;
+    font-size: 0.7rem !important;
+    padding: 0.125rem 0.25rem !important;
+    line-height: 1 !important;
+  }
 }
 
 .search-highlight {
