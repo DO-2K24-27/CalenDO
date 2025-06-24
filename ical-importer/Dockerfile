@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24.3-alpine AS builder
+FROM golang:1.24.4-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates
@@ -20,7 +20,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o ical-importer .
 
 # Final stage
-FROM alpine:latest
+FROM alpine:3.22
 
 # Install ca-certificates for HTTPS requests to iCal URLs
 RUN apk --no-cache add ca-certificates tzdata
