@@ -5,10 +5,10 @@ const API_BASE_URL = '/api';
 
 // Cache durations (in milliseconds)
 const CACHE_DURATIONS = {
-  EVENTS: 12 * 60 * 60 * 1000, // 12 hours
-  PLANNINGS: 12 * 60 * 60 * 1000, // 12 hours
-  PLANNING_DETAIL: 12 * 60 * 60 * 1000, // 12 hours
-  HEALTH: 5 * 60 * 1000, // 5 minutes (keep health checks shorter)
+  EVENTS: 7 * 24 * 60 * 60 * 1000, // 1 week
+  PLANNINGS: 7 * 24 * 60 * 60 * 1000, // 1 week
+  PLANNING_DETAIL: 7 * 24 * 60 * 60 * 1000, // 1 week
+  HEALTH: 5 * 60 * 1000, // 5 minutes
 };
 
 interface CachedApiOptions {
