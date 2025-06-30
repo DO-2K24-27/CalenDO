@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { getTimeUntil } from '../../utils/dateUtils';
+import { useSound } from '../../hooks/useSound';
 
 interface CountdownTimerProps {
   breakDate: Date | null;
@@ -7,11 +8,34 @@ interface CountdownTimerProps {
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [justStartedBreak, setJustStartedBreak] = useState(false);
+  const { playSound } = useSound();
+  const previousTimeLeftRef = useRef<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
   
   const updateTimer = useCallback(() => {
     if (!breakDate) return;
-    setTimeLeft(getTimeUntil(breakDate));
-  }, [breakDate]);
+    
+    const newTimeLeft = getTimeUntil(breakDate);
+    
+    // Check if we just reached the break (countdown went from > 0 to 0)
+    const previousTimeLeft = previousTimeLeftRef.current;
+    const wasCountingDown = previousTimeLeft && 
+      (previousTimeLeft.days > 0 || previousTimeLeft.hours > 0 || previousTimeLeft.minutes > 0 || previousTimeLeft.seconds > 0);
+    const isNowZero = newTimeLeft.days === 0 && newTimeLeft.hours === 0 && newTimeLeft.minutes === 0 && newTimeLeft.seconds === 0;
+    
+    if (wasCountingDown && isNowZero) {
+      // Break has started! Play the sound and show visual feedback
+      playSound();
+      setJustStartedBreak(true);
+      
+      // Hide the visual feedback after 5 seconds (enough time for 3 bell sounds)
+      setTimeout(() => setJustStartedBreak(false), 5000);
+    }
+    
+    // Update the time and store for next comparison
+    setTimeLeft(newTimeLeft);
+    previousTimeLeftRef.current = newTimeLeft;
+  }, [breakDate, playSound]);
   
   useEffect(() => {
     if (!breakDate) return;
@@ -68,6 +92,14 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
 
   return (
     <div className="w-full px-2 sm:px-4">
+      {justStartedBreak && (
+        <div className="mb-6 text-center animate-pulse">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg inline-block">
+            <h3 className="text-xl font-bold">🎉 Break Time! 🔔🔔🔔</h3>
+            <p className="text-sm">Your break has started</p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
         {showDays && (
           <>
