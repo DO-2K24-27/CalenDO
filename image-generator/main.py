@@ -9,7 +9,6 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import os
 from dataclasses import dataclass
-import asyncio
 import logging
 
 # Configure logging
