@@ -433,7 +433,7 @@ imageGenerator:
     hosts:
       - host: calendo.do-polytech.fr
         paths:
-          - path: /image-generator
+          - path: /day-view
             pathType: Prefix
     tls:
       - secretName: calendo-tls-secret
