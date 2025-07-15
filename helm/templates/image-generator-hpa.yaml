@@ -1,0 +1,33 @@
+{{- if and .Values.imageGenerator.enabled .Values.imageGenerator.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "calendo.imagegenerator.fullname" . }}
+  labels:
+    {{- include "calendo.imagegenerator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: imagegenerator
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "calendo.imagegenerator.fullname" . }}
+  minReplicas: {{ .Values.imageGenerator.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.imageGenerator.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.imageGenerator.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.imageGenerator.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.imageGenerator.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.imageGenerator.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

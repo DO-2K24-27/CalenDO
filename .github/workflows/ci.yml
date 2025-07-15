@@ -12,6 +12,7 @@ jobs:
       backend-changed: ${{ steps.changes.outputs.backend }}
       frontend-changed: ${{ steps.changes.outputs.frontend }}
       ical-importer-changed: ${{ steps.changes.outputs.ical-importer }}
+      image-generator-changed: ${{ steps.changes.outputs.image-generator }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,6 +28,8 @@ jobs:
               - 'frontend/**'
             ical-importer:
               - 'ical-importer/**'
+            image-generator:
+              - 'image-generator/**'
 
   build-and-test-backend:
     needs: detect-changes
@@ -107,6 +110,33 @@ jobs:
       - name: Build
         working-directory: ./frontend
         run: npm run build
+
+  build-and-test-image-generator:
+    needs: detect-changes
+    runs-on: github-runner-do
+    if: needs.detect-changes.outputs.image-generator-changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./image-generator
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        working-directory: ./image-generator
+        run: |
+          pip install flake8
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
   docker-backend:
     needs: [detect-changes, build-and-test-backend]
@@ -267,8 +297,61 @@ jobs:
             cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
           fi
 
+  docker-image-generator:
+    needs: [detect-changes, build-and-test-image-generator]
+    runs-on: github-runner-do
+    if: always() && !cancelled() && !failure()
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.8.1
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      # Build and push new image if there are changes
+      - name: Build and push Image Generator Docker image
+        if: needs.detect-changes.outputs.image-generator-changed == 'true' && (needs.build-and-test-image-generator.result == 'success' || needs.build-and-test-image-generator.result == 'skipped')
+        uses: docker/build-push-action@v5
+        with:
+          context: ./image-generator
+          push: true
+          tags: |
+            ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+            ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+
+      # Just tag existing latest image with current commit SHA if no changes
+      - name: Tag existing Image Generator Docker image
+        if: needs.detect-changes.outputs.image-generator-changed == 'false'
+        run: |
+          # Pull latest image
+          docker pull ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+          # Tag it with current commit SHA
+          docker tag ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+          # Push the new tag
+          docker push ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+
+      - name: Keyless signing of Image Generator Docker image
+        run: |
+          export COSIGN_EXPERIMENTAL=1
+          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+          if [ "${{ needs.detect-changes.outputs.image-generator-changed }}" == "true" ]; then
+            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+          fi
+
   deploy:
-    needs: [docker-backend, docker-frontend, docker-ical-importer]
+    needs: [docker-backend, docker-frontend, docker-ical-importer, docker-image-generator]
     if: always() && !cancelled() && !failure()
     runs-on: github-runner-do
     steps:
@@ -298,5 +381,8 @@ jobs:
             --set icalImporter.image.repository=${{ vars.REGISTRY_URL }}/calendo-ical-importer \
             --set icalImporter.image.tag=${{ github.sha }} \
             --set icalImporter.image.pullPolicy=IfNotPresent \
+            --set imageGenerator.image.repository=${{ vars.REGISTRY_URL }}/calendo-image-generator \
+            --set imageGenerator.image.tag=${{ github.sha }} \
+            --set imageGenerator.image.pullPolicy=IfNotPresent \
             --namespace hugo-calendo --create-namespace \
             --wait --timeout 15m

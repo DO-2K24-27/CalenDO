@@ -1,0 +1,83 @@
+{{- if .Values.imageGenerator.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "calendo.imagegenerator.fullname" . }}
+  labels:
+    {{- include "calendo.imagegenerator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: imagegenerator
+spec:
+  {{- if not .Values.imageGenerator.autoscaling.enabled }}
+  replicas: {{ .Values.imageGenerator.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "calendo.imagegenerator.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: imagegenerator
+  template:
+    metadata:
+      {{- with .Values.imageGenerator.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "calendo.imagegenerator.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: imagegenerator
+    spec:
+      {{- with .Values.imageGenerator.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "calendo.imagegenerator.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.imageGenerator.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}-imagegenerator
+          securityContext:
+            {{- toYaml .Values.imageGenerator.securityContext | nindent 12 }}
+          image: "{{ .Values.imageGenerator.image.repository }}:{{ .Values.imageGenerator.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imageGenerator.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.imageGenerator.service.port }}
+              protocol: TCP
+          env:
+            - name: BACKEND_URL
+              value: "http://{{ include "calendo.backend.fullname" . }}:8080"
+          {{- if .Values.imageGenerator.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.imageGenerator.livenessProbe.httpGet.path }}
+              port: {{ .Values.imageGenerator.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.imageGenerator.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.imageGenerator.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.imageGenerator.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.imageGenerator.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.imageGenerator.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.imageGenerator.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.imageGenerator.readinessProbe.httpGet.path }}
+              port: {{ .Values.imageGenerator.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.imageGenerator.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.imageGenerator.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.imageGenerator.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.imageGenerator.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.imageGenerator.readinessProbe.successThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.imageGenerator.resources | nindent 12 }}
+      {{- with .Values.imageGenerator.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imageGenerator.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.imageGenerator.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

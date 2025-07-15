@@ -18,6 +18,10 @@ Expand the name of the chart.
 {{- include "calendo.name" . }}-icalimporter
 {{- end }}
 
+{{- define "calendo.imagegenerator.name" -}}
+{{- include "calendo.name" . }}-imagegenerator
+{{- end }}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -46,6 +50,10 @@ If release name contains chart name it will be used as a full name.
 
 {{- define "calendo.icalimporter.fullname" -}}
 {{- include "calendo.fullname" . }}-icalimporter
+{{- end }}
+
+{{- define "calendo.imagegenerator.fullname" -}}
+{{- include "calendo.fullname" . }}-imagegenerator
 {{- end }}
 
 {{/*
@@ -85,6 +93,15 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{- define "calendo.imagegenerator.labels" -}}
+helm.sh/chart: {{ include "calendo.chart" . }}
+{{ include "calendo.imagegenerator.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{/*
 Selector labels
 */}}
@@ -100,6 +117,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{- define "calendo.icalimporter.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "calendo.icalimporter.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "calendo.imagegenerator.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "calendo.imagegenerator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
@@ -133,5 +155,16 @@ Create the name of the service account to use for icalimporter
 {{- default (include "calendo.icalimporter.fullname" .) .Values.icalImporter.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.icalImporter.serviceAccount.name }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create the name of the service account to use for imagegenerator
+*/}}
+{{- define "calendo.imagegenerator.serviceAccountName" -}}
+{{- if .Values.imageGenerator.serviceAccount.create }}
+{{- default (include "calendo.imagegenerator.fullname" .) .Values.imageGenerator.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.imageGenerator.serviceAccount.name }}
 {{- end }}
 {{- end }}

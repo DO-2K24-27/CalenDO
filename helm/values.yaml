@@ -356,3 +356,100 @@ icalImporter:
           url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd8637ec8dca23a219b6c5971b37e44c35393a8bd1410f08d75eb4923ee44282fb5dd,1"
           enabled: true
 
+# Image Generator configuration
+imageGenerator:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: calendo-image-generator
+    pullPolicy: Always
+    tag: "latest"
+
+  imagePullSecrets: []
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: false
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  # Configurable health checks
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /health
+      port: http
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    httpGet:
+      path: /health
+      port: http
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - host: calendo.do-polytech.fr
+        paths:
+          - path: /image-generator
+            pathType: Prefix
+    tls:
+      - secretName: calendo-tls-secret
+        hosts:
+          - calendo.do-polytech.fr
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    # targetMemoryUtilizationPercentage: 80
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
