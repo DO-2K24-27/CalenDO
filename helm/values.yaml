@@ -423,14 +423,14 @@ imageGenerator:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
-      - host: calendo.do-polytech.fr
+      - host: img.calendo.do-polytech.fr
         paths:
-          - path: /day-view
+          - path: /
             pathType: Prefix
     tls:
-      - secretName: calendo-tls-secret
+      - secretName: img-calendo-tls-secret
         hosts:
-          - calendo.do-polytech.fr
+          - img.calendo.do-polytech.fr
 
   autoscaling:
     enabled: false
