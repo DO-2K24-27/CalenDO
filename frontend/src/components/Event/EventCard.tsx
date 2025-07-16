@@ -3,6 +3,7 @@ import { Event } from '../../types';
 import { formatTime } from '../../utils/dateUtils';
 import { highlightText } from '../../utils/searchUtils';
 import { useCalendar } from '../../contexts/CalendarContext';
+import { getEventColors } from '../../utils/colorUtils';
 
 interface EventCardProps {
   event: Event;
@@ -24,16 +25,19 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
   // Show planning name when multiple plannings are selected
   const showPlanningName = selectedPlannings.length > 1;
   
-  const isBreak = event.summary.toLowerCase().includes('break');
-  const bgColor = isBreak ? 'bg-green-100 border-green-300' : 'bg-gray-50 border-gray-200';
-  const textColor = isBreak ? 'text-green-700' : 'text-gray-700';
+  // Get dynamic colors based on event title
+  const eventColors = getEventColors(event.summary);
   
   if (compact) {
     return (
       <div
         onClick={onClick}
-        className={`event-card text-xs p-1 rounded cursor-pointer border-l-4 h-full flex flex-col justify-start overflow-hidden ${bgColor} ${textColor}`}
-        style={{ borderLeftColor: planningColor }}
+        className={`event-card text-xs p-1 rounded cursor-pointer border-l-4 h-full flex flex-col justify-start overflow-hidden`}
+        style={{ 
+          borderLeftColor: planningColor,
+          backgroundColor: eventColors.bg,
+          color: eventColors.text
+        }}
       >
         <div className="font-medium truncate leading-tight">
           {highlightText(event.summary, keyword)}
@@ -53,20 +57,24 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
   return (
     <div
       onClick={onClick}
-      className={`event-card p-2 rounded mb-2 cursor-pointer border-l-4 ${bgColor} ${textColor}`}
-      style={{ borderLeftColor: planningColor }}
+      className={`event-card p-2 rounded mb-2 cursor-pointer border-l-4`}
+      style={{ 
+        borderLeftColor: planningColor,
+        backgroundColor: eventColors.bg,
+        color: eventColors.text
+      }}
     >
       <div className="text-xs mb-1">{startTime} - {endTime}</div>
       <div className="font-medium truncate">
         {highlightText(event.summary, keyword)}
       </div>
       {showPlanningName && eventPlanning && (
-        <div className="text-xs text-gray-500 truncate mt-1">
+        <div className="text-xs opacity-60 truncate mt-1">
           📋 {eventPlanning.name}
         </div>
       )}
       {!compact && event.location && (
-        <div className="text-xs truncate mt-1">
+        <div className="text-xs truncate mt-1 opacity-75">
           📍 {highlightText(event.location, keyword)}
         </div>
       )}
