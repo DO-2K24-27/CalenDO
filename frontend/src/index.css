@@ -135,6 +135,43 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.125rem 0.25rem !important;
     line-height: 1 !important;
   }
+
+  /* Mobile header improvements */
+  .mobile-header-compact {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .mobile-burger-menu {
+    backdrop-filter: blur(10px);
+    background-color: rgba(107, 70, 193, 0.95);
+  }
+  
+  /* Reduce padding on mobile for better space usage */
+  .mobile-compact-spacing {
+    padding: 0.5rem !important;
+  }
+  
+  .mobile-compact-margin {
+    margin: 0.5rem !important;
+  }
+  
+  /* Touch-friendly button sizing */
+  .mobile-touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  /* Improved search collapsible */
+  .mobile-search-collapsed {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  
+  .mobile-search-expanded {
+    max-height: 500px;
+    transition: max-height 0.3s ease-in;
+  }
 }
 
 .search-highlight {

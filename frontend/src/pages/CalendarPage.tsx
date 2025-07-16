@@ -6,7 +6,6 @@ import WeekView from '../components/Calendar/WeekView';
 import DayView from '../components/Calendar/DayView';
 import SwipeableCalendarContainer from '../components/Calendar/SwipeableCalendarContainer';
 import EventDetail from '../components/Event/EventDetail';
-import SearchBar from '../components/Search/SearchBar';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 import ErrorDisplay from '../components/UI/ErrorDisplay';
 import EmptyState from '../components/UI/EmptyState';
@@ -32,20 +31,18 @@ const CalendarPage: React.FC = () => {
   const isSearchActive = searchFilters.keyword !== '';
   
   return (
-    <div className="container mx-auto px-4 py-4">
-      <SearchBar />
-      
+    <div className="container mx-auto px-2 md:px-4 py-2 md:py-4">
       {noSearchResults && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-center">
-          <p className="text-yellow-700">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3 text-center">
+          <p className="text-yellow-700 text-sm">
             No events found matching "{searchFilters.keyword}".
           </p>
         </div>
       )}
       
       {hasSearchResults && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-          <p className="text-purple-700">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3">
+          <p className="text-purple-700 text-sm">
             Found {searchFilteredEvents.length} event(s) matching "{searchFilters.keyword}".
           </p>
         </div>
@@ -64,7 +61,7 @@ const CalendarPage: React.FC = () => {
         />
       ) : (
         <SwipeableCalendarContainer>
-          <div className="mb-4">
+          <div className="mb-2 md:mb-4">
             {view === 'month' && <MonthView />}
             {view === 'week' && <WeekView />}
             {view === 'day' && <DayView />}
