@@ -627,7 +627,10 @@ async def generate_day_view_image(
             content=img_bytes.getvalue(),
             media_type="image/png",
             headers={
-                "Content-Disposition": f"inline; filename=day-view-{target_date.strftime('%Y-%m-%d')}.png"
+                "Content-Disposition": f"inline; filename=day-view-{target_date.strftime('%Y-%m-%d')}.png",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
             }
         )
         
