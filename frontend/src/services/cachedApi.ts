@@ -35,7 +35,7 @@ class CachedApiService {
       }
     }
 
-    // Try to fetch from network
+    // Try to fetch from network with Discord Activity CSP fallback
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -51,6 +51,37 @@ class CachedApiService {
       return processedData;
     } catch (error) {
       console.error(`Network request failed for ${url}:`, error);
+      
+      // Check if this is a CSP error or network error that might be Discord Activity related
+      const isCSPError = error instanceof TypeError && 
+        (error.message.includes('Failed to fetch') || 
+         error.message.includes('NetworkError') || 
+         error.message.includes('blocked by CORS') ||
+         error.message.includes('Content Security Policy'));
+      
+      if (isCSPError && url.includes('/api/')) {
+        // Try with Discord Activity proxy prefix
+        const proxyUrl = url.replace('/api/', '/.proxy/api/');
+        console.log(`Retrying with Discord Activity proxy: ${proxyUrl}`);
+        
+        try {
+          const proxyResponse = await fetch(proxyUrl);
+          if (!proxyResponse.ok) {
+            throw new Error(`HTTP error! Status: ${proxyResponse.status}`);
+          }
+          
+          const proxyData = await proxyResponse.json();
+          const processedProxyData = proxyData || (Array.isArray([]) ? [] : proxyData);
+          
+          // Cache the successful response
+          apiCache.set(cacheKey, processedProxyData, cacheDuration);
+          
+          return processedProxyData;
+        } catch (proxyError) {
+          console.error(`Proxy request also failed for ${proxyUrl}:`, proxyError);
+          // Continue to fallback logic below
+        }
+      }
       
       // Fallback to cache if network fails
       if (fallbackToCache) {
@@ -77,8 +108,34 @@ class CachedApiService {
         const data = await response.json();
         const processedData = data || (Array.isArray([]) ? [] : data);
         apiCache.set(cacheKey, processedData, cacheDuration);
+        return;
       }
     } catch (error) {
+      // Check if this is a CSP error that might be Discord Activity related
+      const isCSPError = error instanceof TypeError && 
+        (error.message.includes('Failed to fetch') || 
+         error.message.includes('NetworkError') || 
+         error.message.includes('blocked by CORS') ||
+         error.message.includes('Content Security Policy'));
+      
+      if (isCSPError && url.includes('/api/')) {
+        // Try with Discord Activity proxy prefix
+        const proxyUrl = url.replace('/api/', '/.proxy/api/');
+        console.debug(`Background refresh retrying with Discord Activity proxy: ${proxyUrl}`);
+        
+        try {
+          const proxyResponse = await fetch(proxyUrl);
+          if (proxyResponse.ok) {
+            const proxyData = await proxyResponse.json();
+            const processedProxyData = proxyData || (Array.isArray([]) ? [] : proxyData);
+            apiCache.set(cacheKey, processedProxyData, cacheDuration);
+            return;
+          }
+        } catch (proxyError) {
+          console.debug(`Background proxy refresh also failed for ${proxyUrl}:`, proxyError);
+        }
+      }
+      
       // Silently fail background refresh
       console.debug(`Background refresh failed for ${cacheKey}:`, error);
     }
