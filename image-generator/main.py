@@ -165,7 +165,7 @@ class DayViewGenerator:
     def calculate_time_range(self, events, target_date: date):
         """Calculate optimal time range based on events"""
         if not events:
-            return 8, 18  # Default 8 AM to 6 PM
+            return 6, 20
             
         start_times = []
         end_times = []
@@ -174,13 +174,34 @@ class DayViewGenerator:
             start_hour, start_minute = self.get_local_time_components(event.start_time)
             end_hour, end_minute = self.get_display_time_components(event.end_time, target_date)
             
-            start_times.append(start_hour)
-            end_times.append(end_hour)
+            # Convert to fractional hours for more precise calculation
+            start_hour_fractional = start_hour + start_minute / 60
+            end_hour_fractional = end_hour + end_minute / 60
+            
+            start_times.append(start_hour_fractional)
+            end_times.append(end_hour_fractional)
             
             logger.info(f"Event time components: {start_hour}:{start_minute:02d} - {end_hour}:{end_minute:02d}")
         
-        start_hour = max(0, min(start_times) - 1)
-        end_hour = min(24, max(end_times) + 1)
+        earliest_hour = min(start_times)
+        latest_hour = max(end_times)
+        
+        # Floor and ceil to get full hours
+        start_hour = int(earliest_hour)
+        end_hour = int(latest_hour) + (1 if latest_hour % 1 > 0 else 0)  # Ceiling
+        
+        # If end hour is greater than 24, cap it at 24
+        if end_hour > 24:
+            end_hour = 24
+        
+        # If events are within the default 6am-8pm range, use the default
+        if start_hour >= 6 and end_hour <= 20:
+            logger.info(f"Events within default range, using 6:00 - 20:00")
+            return 6, 20
+        
+        # Otherwise, use the actual range with padding (1 hour before and after)
+        start_hour = max(0, start_hour - 1)
+        end_hour = min(24, end_hour + 1)
         
         logger.info(f"Calculated time range: {start_hour}:00 - {end_hour}:00")
         return start_hour, end_hour
