@@ -12,37 +12,27 @@ spec:
   
   postgresql:
     parameters:
-      {{- toYaml .Values.cnpg.cluster.postgresql.parameters | nindent 6 }}
+      max_connections: {{ .Values.cnpg.postgresql.parameters.max_connections | quote }}
+      shared_buffers: {{ .Values.cnpg.postgresql.parameters.shared_buffers | quote }}
+      effective_cache_size: {{ .Values.cnpg.postgresql.parameters.effective_cache_size | quote }}
   
   bootstrap:
     initdb:
       database: {{ .Values.cnpg.database.name }}
       owner: {{ .Values.cnpg.database.owner }}
-      secret:
-        name: {{ .Values.cnpg.database.secret }}
   
   storage:
-    size: {{ .Values.cnpg.cluster.storage.size }}
-    {{- if .Values.cnpg.cluster.storage.storageClass }}
-    storageClass: {{ .Values.cnpg.cluster.storage.storageClass }}
+    size: {{ .Values.cnpg.storage.size }}
+    {{- if .Values.cnpg.storage.storageClass }}
+    storageClass: {{ .Values.cnpg.storage.storageClass }}
     {{- end }}
-  
-  {{- if .Values.cnpg.cluster.monitoring.enabled }}
-  monitoring:
-    enabled: true
-  {{- end }}
-  
-  {{- if .Values.cnpg.cluster.backup.enabled }}
-  backup:
-    {{- toYaml .Values.cnpg.cluster.backup | nindent 4 }}
-  {{- end }}
 
   # Ensure proper resource limits and requests
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "100m"
+      memory: {{ .Values.cnpg.resources.requests.memory | quote }}
+      cpu: {{ .Values.cnpg.resources.requests.cpu | quote }}
     limits:
-      memory: "512Mi"
-      cpu: "500m"
+      memory: {{ .Values.cnpg.resources.limits.memory | quote }}
+      cpu: {{ .Values.cnpg.resources.limits.cpu | quote }}
 {{- end }}

@@ -250,32 +250,26 @@ cnpg:
   cluster:
     name: calendo-postgres
     instances: 1
-    postgresql:
-      parameters:
-        max_connections: "100"
-        shared_buffers: "128MB"
-        effective_cache_size: "256MB"
-    storage:
-      size: 1Gi
-      storageClass: ""  # Use default storage class
-    monitoring:
-      enabled: false
-    backup:
-      enabled: false
-  
-  # Database credentials
+    primaryUpdateStrategy: unsupervised
+  storage:
+    storageClass: "longhorn"
+    size: 10Gi
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+      effective_cache_size: "1GB"
   database:
     name: calendo
     owner: calendo
     secret: calendo-postgres-credentials
-  
-  # Bootstrap configuration
-  bootstrap:
-    initdb:
-      database: calendo
-      owner: calendo
-      secret:
-        name: calendo-postgres-credentials
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 # iCal Importer configuration
 icalImporter:
