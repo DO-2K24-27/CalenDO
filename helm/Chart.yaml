@@ -6,8 +6,3 @@ version: 0.1.0
 appVersion: "1.0.0"
 maintainers:
   - name: CalenDO Team
-dependencies:
-  - name: postgresql
-    version: 16.5.0
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled

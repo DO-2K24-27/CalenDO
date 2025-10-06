@@ -107,6 +107,8 @@ backend:
   env:
     PORT: "8080"
     ENVIRONMENT: "production"
+    DB_HOST: "calendo-postgres-rw"
+    DB_PORT: "5432"
 
   configMapData:
     config.yaml: |
@@ -116,10 +118,9 @@ backend:
       # Database configuration
       database:
         driver: postgres
-        host: calendo-postgresql
+        host: calendo-postgres-rw
         port: 5432
-        username: postgres
-        password: postgres
+        username: calendo
         dbname: calendo
         sslmode: disable
         max_open_conns: 25
@@ -242,17 +243,38 @@ frontend:
   env:
     API_URL: "https://calendo.do-polytech.fr/api"
 
-# Database configuration
-postgresql:
+# Database configuration - CloudNativePG
+cnpg:
   enabled: true
-  auth:
-    username: postgres
-    password: postgres
-    database: calendo
-  primary:
-    persistence:
-      enabled: true
+  cluster:
+    name: calendo-postgres
+    instances: 1
+    postgresql:
+      parameters:
+        max_connections: "100"
+        shared_buffers: "128MB"
+        effective_cache_size: "256MB"
+    storage:
       size: 1Gi
+      storageClass: ""  # Use default storage class
+    monitoring:
+      enabled: false
+    backup:
+      enabled: false
+  
+  # Database credentials
+  database:
+    name: calendo
+    owner: calendo
+    secret: calendo-postgres-credentials
+  
+  # Bootstrap configuration
+  bootstrap:
+    initdb:
+      database: calendo
+      owner: calendo
+      secret:
+        name: calendo-postgres-credentials
 
 # iCal Importer configuration
 icalImporter:
@@ -320,10 +342,9 @@ icalImporter:
       # CalenDO iCal Importer Configuration
       database:
         driver: postgres
-        host: calendo-postgresql
+        host: calendo-postgres-rw
         port: 5432
-        username: postgres
-        password: postgres
+        username: calendo
         dbname: calendo
         sslmode: disable
         max_open_conns: 25

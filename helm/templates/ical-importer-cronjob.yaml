@@ -44,6 +44,26 @@ spec:
             args:
             - "sync"
             - "/app/sync-config.yaml"
+            env:
+            {{- if .Values.cnpg.enabled }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: password
+            - name: DATABASE_HOST
+              value: {{ printf "%s-rw" .Values.cnpg.cluster.name }}
+            - name: DATABASE_USERNAME
+              value: {{ .Values.cnpg.database.owner }}
+            - name: DATABASE_DBNAME
+              value: {{ .Values.cnpg.database.name }}
+            {{- end }}
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_DRIVER
+              value: "postgres"
+            - name: DATABASE_SSLMODE
+              value: "disable"
             volumeMounts:
             - name: config
               mountPath: /app/config.yaml
