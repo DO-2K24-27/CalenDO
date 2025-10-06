@@ -57,13 +57,13 @@ spec:
               value: {{ .Values.cnpg.database.owner }}
             - name: DATABASE_DBNAME
               value: {{ .Values.cnpg.database.name }}
-            {{- end }}
             - name: DATABASE_PORT
               value: "5432"
             - name: DATABASE_DRIVER
               value: "postgres"
             - name: DATABASE_SSLMODE
               value: "disable"
+            {{- end }}
             volumeMounts:
             - name: config
               mountPath: /app/config.yaml
