@@ -111,6 +111,16 @@ func initConfig() {
 	viper.SetConfigType("yaml")   // Config file type
 	viper.AddConfigPath(configDir)
 
+	// Enable reading environment variables
+	viper.AutomaticEnv() // read in environment variables that match
+
+	// Allow environment variables to override config file values
+	viper.BindEnv("database.password", "DB_PASSWORD")
+	viper.BindEnv("database.host", "DB_HOST")
+	viper.BindEnv("database.username", "DB_USER")
+	viper.BindEnv("database.dbname", "DB_NAME")
+	viper.BindEnv("database.port", "DB_PORT")
+
 	// Read the config
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Failed to read config: %v", err)
