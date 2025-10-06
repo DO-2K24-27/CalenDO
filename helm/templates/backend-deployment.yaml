@@ -31,6 +31,30 @@ spec:
       serviceAccountName: {{ include "calendo.backend.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+      {{- if .Values.cnpg.enabled }}
+      initContainers:
+      - name: config-injector
+        image: busybox:1.35
+        command:
+        - /bin/sh
+        - -c
+        - |
+          cp /original-config/config.yaml /shared-config/config.yaml
+          sed -i "s/password: \"\"/password: \"$DB_PASSWORD\"/" /shared-config/config.yaml
+          echo "Config file updated with database password"
+          cat /shared-config/config.yaml
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.cnpg.database.secret }}
+              key: password
+        volumeMounts:
+        - name: original-config-volume
+          mountPath: /original-config
+        - name: shared-config-volume
+          mountPath: /shared-config
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}-backend
           securityContext:
@@ -74,8 +98,13 @@ spec:
                   name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_NAME
           volumeMounts:
+            {{- if .Values.cnpg.enabled }}
+            - name: shared-config-volume
+              mountPath: /app/configs
+            {{- else }}
             - name: config-volume
               mountPath: /app/configs
+            {{- end }}
           {{- if .Values.backend.livenessProbe.enabled }}
           livenessProbe:
             httpGet:
@@ -101,9 +130,17 @@ spec:
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
       volumes:
+        {{- if .Values.cnpg.enabled }}
+        - name: original-config-volume
+          configMap:
+            name: {{ include "calendo.backend.fullname" . }}-config
+        - name: shared-config-volume
+          emptyDir: {}
+        {{- else }}
         - name: config-volume
           configMap:
             name: {{ include "calendo.backend.fullname" . }}-config
+        {{- end }}
       {{- with .Values.backend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

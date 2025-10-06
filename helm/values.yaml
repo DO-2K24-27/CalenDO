@@ -121,6 +121,7 @@ backend:
         host: calendo-postgres-rw
         port: 5432
         username: calendo
+        password: ""
         dbname: calendo
         sslmode: disable
         max_open_conns: 25
