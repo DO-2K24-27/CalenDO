@@ -55,11 +55,19 @@ spec:
                 secretKeyRef:
                   name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_USER
+            {{- if .Values.cnpg.enabled }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: password
+            {{- else }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "calendo.backend.fullname" . }}-db-credentials
                   key: DB_PASSWORD
+            {{- end }}
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:

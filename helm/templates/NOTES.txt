@@ -53,7 +53,22 @@ Your release is named {{ .Release.Name }}.
    Frontend component is deployed but not yet configured. Frontend access details will be provided here when implemented.
 {{- end }}
 
-{{- if .Values.postgresql.enabled }}
+{{- if .Values.cnpg.enabled }}
+3. Database connection details (CloudNativePG):
+   PostgreSQL Cluster: {{ .Values.cnpg.cluster.name }}
+   PostgreSQL Host (Read/Write): {{ .Values.cnpg.cluster.name }}-rw
+   PostgreSQL Host (Read Only): {{ .Values.cnpg.cluster.name }}-ro
+   PostgreSQL Port: 5432
+   PostgreSQL User: {{ .Values.cnpg.database.owner }}
+   PostgreSQL Password: kubectl get secret --namespace {{ .Release.Namespace }} {{ .Values.cnpg.database.secret }} -o jsonpath="{.data.password}" | base64 --decode
+   PostgreSQL Database: {{ .Values.cnpg.database.name }}
+   
+   To check cluster status:
+     kubectl get cluster {{ .Values.cnpg.cluster.name }}
+   
+   To get cluster details:
+     kubectl describe cluster {{ .Values.cnpg.cluster.name }}
+{{- else if .Values.postgresql.enabled }}
 3. Database connection details:
    PostgreSQL Host: {{ .Release.Name }}-postgresql
    PostgreSQL Port: 5432

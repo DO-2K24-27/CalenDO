@@ -1,0 +1,48 @@
+{{- if .Values.cnpg.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cnpg.cluster.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "calendo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  instances: {{ .Values.cnpg.cluster.instances }}
+  
+  postgresql:
+    parameters:
+      {{- toYaml .Values.cnpg.cluster.postgresql.parameters | nindent 6 }}
+  
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database.name }}
+      owner: {{ .Values.cnpg.database.owner }}
+      secret:
+        name: {{ .Values.cnpg.database.secret }}
+  
+  storage:
+    size: {{ .Values.cnpg.cluster.storage.size }}
+    {{- if .Values.cnpg.cluster.storage.storageClass }}
+    storageClass: {{ .Values.cnpg.cluster.storage.storageClass }}
+    {{- end }}
+  
+  {{- if .Values.cnpg.cluster.monitoring.enabled }}
+  monitoring:
+    enabled: true
+  {{- end }}
+  
+  {{- if .Values.cnpg.cluster.backup.enabled }}
+  backup:
+    {{- toYaml .Values.cnpg.cluster.backup | nindent 4 }}
+  {{- end }}
+
+  # Ensure proper resource limits and requests
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+{{- end }}
