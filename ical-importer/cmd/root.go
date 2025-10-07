@@ -168,6 +168,15 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
+	// Bind environment variables to config keys
+	viper.BindEnv("database.password", "DATABASE_PASSWORD")
+	viper.BindEnv("database.host", "DATABASE_HOST")
+	viper.BindEnv("database.username", "DATABASE_USERNAME")
+	viper.BindEnv("database.dbname", "DATABASE_DBNAME")
+	viper.BindEnv("database.port", "DATABASE_PORT")
+	viper.BindEnv("database.driver", "DATABASE_DRIVER")
+	viper.BindEnv("database.sslmode", "DATABASE_SSLMODE")
+
 	// If a config file is found, read it in
 	if err := viper.ReadInConfig(); err == nil {
 		log.Printf("Using config file: %s", viper.ConfigFileUsed())
@@ -175,6 +184,29 @@ func initConfig() {
 		log.Printf("Warning: Could not read config file: %v", err)
 		// Set default database configuration
 		setDefaultConfig()
+	}
+
+	// Override config with environment variables after reading the file
+	if dbPassword := os.Getenv("DATABASE_PASSWORD"); dbPassword != "" {
+		viper.Set("database.password", dbPassword)
+	}
+	if dbHost := os.Getenv("DATABASE_HOST"); dbHost != "" {
+		viper.Set("database.host", dbHost)
+	}
+	if dbUser := os.Getenv("DATABASE_USERNAME"); dbUser != "" {
+		viper.Set("database.username", dbUser)
+	}
+	if dbName := os.Getenv("DATABASE_DBNAME"); dbName != "" {
+		viper.Set("database.dbname", dbName)
+	}
+	if dbPort := os.Getenv("DATABASE_PORT"); dbPort != "" {
+		viper.Set("database.port", dbPort)
+	}
+	if dbDriver := os.Getenv("DATABASE_DRIVER"); dbDriver != "" {
+		viper.Set("database.driver", dbDriver)
+	}
+	if dbSSLMode := os.Getenv("DATABASE_SSLMODE"); dbSSLMode != "" {
+		viper.Set("database.sslmode", dbSSLMode)
 	}
 }
 
