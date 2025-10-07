@@ -3,18 +3,11 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: {{ .Values.cnpg.cluster.name }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "calendo.labels" . | nindent 4 }}
     app.kubernetes.io/component: database
 spec:
   instances: {{ .Values.cnpg.cluster.instances }}
-  
-  postgresql:
-    parameters:
-      max_connections: {{ .Values.cnpg.postgresql.parameters.max_connections | quote }}
-      shared_buffers: {{ .Values.cnpg.postgresql.parameters.shared_buffers | quote }}
-      effective_cache_size: {{ .Values.cnpg.postgresql.parameters.effective_cache_size | quote }}
   
   bootstrap:
     initdb:

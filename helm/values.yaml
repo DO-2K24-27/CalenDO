@@ -253,12 +253,7 @@ cnpg:
     primaryUpdateStrategy: unsupervised
   storage:
     storageClass: "longhorn"
-    size: 10Gi
-  postgresql:
-    parameters:
-      max_connections: "200"
-      shared_buffers: "256MB"
-      effective_cache_size: "1GB"
+    size: 1Gi
   database:
     name: calendo
     owner: calendo
