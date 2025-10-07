@@ -126,5 +126,22 @@ func initConfig() {
 		log.Fatalf("Failed to read config: %v", err)
 	}
 
+	// Override config with environment variables after reading the file
+	if dbPassword := os.Getenv("DB_PASSWORD"); dbPassword != "" {
+		viper.Set("database.password", dbPassword)
+	}
+	if dbHost := os.Getenv("DB_HOST"); dbHost != "" {
+		viper.Set("database.host", dbHost)
+	}
+	if dbUser := os.Getenv("DB_USER"); dbUser != "" {
+		viper.Set("database.username", dbUser)
+	}
+	if dbName := os.Getenv("DB_NAME"); dbName != "" {
+		viper.Set("database.dbname", dbName)
+	}
+	if dbPort := os.Getenv("DB_PORT"); dbPort != "" {
+		viper.Set("database.port", dbPort)
+	}
+
 	log.Printf("Using config file: %s", viper.ConfigFileUsed())
 }
