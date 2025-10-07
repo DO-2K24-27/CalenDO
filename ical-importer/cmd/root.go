@@ -98,10 +98,12 @@ calendars:
   - name: "Work Calendar"
     url: "https://calendar.google.com/calendar/ical/work@example.com/public/basic.ics"
     enabled: true
+    color: "#3B82F6"
   - name: "Personal Calendar"
     url: "https://calendar.google.com/calendar/ical/personal@example.com/public/basic.ics"
     enabled: true
     custom_id: "personal-cal"
+    color: "#10B981"
   - name: "Team Calendar" 
     url: "https://outlook.office365.com/owa/calendar/team@company.com/reachcalendar.ics"
     enabled: false
@@ -110,7 +112,8 @@ Configuration options:
   - name: Display name for the calendar (required, will override calendar's internal name)
   - url: iCal URL or file path (required)
   - enabled: Whether to sync this calendar (default: true)
-  - custom_id: Custom ID for the planning (optional)`,
+  - custom_id: Custom ID for the planning (optional)
+  - color: Hex color code for the calendar (optional, auto-generated if not specified)`,
 	Args: cobra.ExactArgs(1),
 	Run:  runSync,
 }
@@ -125,6 +128,7 @@ type CalendarSource struct {
 	URL      string `yaml:"url"`
 	Enabled  bool   `yaml:"enabled"`
 	CustomID string `yaml:"custom_id,omitempty"` // Optional custom planning ID
+	Color    string `yaml:"color,omitempty"`     // Optional custom color
 }
 
 func init() {
@@ -241,7 +245,7 @@ func runImport(cmd *cobra.Command, args []string) {
 		log.Printf("Processing source: %s", source)
 
 		// Parse and import the iCal source
-		if err := processICalSourceWithCustomization(importerService, source, customName, customID); err != nil {
+		if err := processICalSourceWithCustomization(importerService, source, customName, customID, ""); err != nil {
 			log.Printf("Failed to process source %s: %v", source, err)
 			continue
 		}
@@ -252,7 +256,7 @@ func runImport(cmd *cobra.Command, args []string) {
 	log.Println("Import completed!")
 }
 
-func processICalSourceWithCustomization(importerService *importer.Importer, source, customName, customID string) error {
+func processICalSourceWithCustomization(importerService *importer.Importer, source, customName, customID, customColor string) error {
 	// Parse the source to determine if it's a URL or file path
 	var cal *ical.Calendar
 	var err error
@@ -301,12 +305,20 @@ func processICalSourceWithCustomization(importerService *importer.Importer, sour
 		finalPlanningID = generatePlanningID(source)
 	}
 
+	// Determine the final color
+	var finalColor string
+	if customColor != "" {
+		finalColor = customColor
+	} else {
+		finalColor = generateRandomColor()
+	}
+
 	// Create or get planning
 	planning := &models.Planning{
 		ID:          finalPlanningID,
 		Name:        finalPlanningName,
 		Description: generateCalendarDescription(cal, source),
-		Color:       generateRandomColor(),
+		Color:       finalColor,
 		IsDefault:   false,
 	}
 
@@ -637,7 +649,7 @@ func runSync(cmd *cobra.Command, args []string) {
 
 		log.Printf("Syncing calendar: %s (%s)", cal.Name, cal.URL)
 
-		if err := processICalSourceWithCustomization(importerService, cal.URL, cal.Name, cal.CustomID); err != nil {
+		if err := processICalSourceWithCustomization(importerService, cal.URL, cal.Name, cal.CustomID, cal.Color); err != nil {
 			log.Printf("Failed to sync calendar %s: %v", cal.Name, err)
 			errorCount++
 			continue

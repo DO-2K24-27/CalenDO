@@ -1,11 +1,26 @@
-# Example sync configuration with custom name and ID options
+# Sync configuration for calendars
 calendars:
-  - name: "DO3"
+  - name: "DO3 - 24/25"
     url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd863dc05dc8a15d9422fae7ee484b3898d8e851896a1242f538a915392024bd1e25b,1"
     enabled: true
-  - name: "DO4"
+    color: "#3498db"
+  - name: "DO4 - 24/25"
     url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd863bcbff929ac380e6e7b9c42537a27a3110cbac0bdb67220fb583d26eb8c88c83a166c54e36382c1aa3eb0ff5cb8980cdb,1"
     enabled: true
-  - name: "DO5"
+    color: "#01d758"
+  - name: "DO5 - 24/25"
     url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c42ad2bc44567c9aba276333fe3ae8d54adc5c094f7d1a811b903031bde802c7f5504bb0f91308d2c106189c9761b40d99868c70800f2cbea9a957a153519fd8637ec8dca23a219b6c5971b37e44c35393a8bd1410f08d75eb4923ee44282fb5dd,1"
     enabled: true
+    color: "#f1c40f"
+  - name: "DO3 - 25/26"
+    url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c4255dc57febc36bcda019d951db547ac9dc5c094f7d1a811b903031bde802c7f52fd380b992d3771de6139e0d9278c8e91aa43e5f4eeaa642fb89a601c5d38bdb07a747e7da078b4e85f9febe95101177b092d5b19c406a3e9b43a4d092eaac2afefc38c0d191e0515ed6428e69e11b7e,1"
+    enabled: true
+    color: "#2980b9"
+  - name: "DO4 - 25/26"
+    url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c4255dc57febc36bcda019d951db547ac9dc5c094f7d1a811b903031bde802c7f52fd380b992d3771de6139e0d9278c8e91aa43e5f4eeaa642fb89a601c5d38bdb7ec8dca23a219b6c5971b37e44c353937b167e7f4754a1e8f74756609d173e71166c54e36382c1aa3eb0ff5cb8980cdb,1"
+    enabled: true
+    color: "#00b943"
+  - name: "DO5 - 25/26"
+    url: "https://proseconsult.umontpellier.fr/jsp/custom/modules/plannings/direct_cal.jsp?data=58c99062bab31d256bee14356aca3f2423c0f022cb9660eba051b2653be722c4255dc57febc36bcda019d951db547ac9dc5c094f7d1a811b903031bde802c7f52fd380b992d3771de6139e0d9278c8e91aa43e5f4eeaa642fb89a601c5d38bdb7ec8dca23a219b6c5971b37e44c35393a8bd1410f08d75eb4923ee44282fb5dd,1"
+    enabled: true
+    color: "#e67e22"
