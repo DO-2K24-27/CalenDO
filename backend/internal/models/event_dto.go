@@ -6,6 +6,7 @@ import (
 
 // EventResponse represents the response structure for an event
 type EventResponse struct {
+	ID           string            `json:"id"`
 	UID          string            `json:"uid"`
 	PlanningID   string            `json:"planning_id"`
 	Summary      string            `json:"summary"`
@@ -21,6 +22,7 @@ type EventResponse struct {
 // ToResponse converts an Event to EventResponse
 func (e *Event) ToResponse() EventResponse {
 	response := EventResponse{
+		ID:           e.ID,
 		UID:          e.UID,
 		PlanningID:   e.PlanningID,
 		Summary:      e.Summary,

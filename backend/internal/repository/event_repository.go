@@ -50,14 +50,14 @@ func (r *EventRepository) FindByPlanningID(planningID string) ([]*models.Event, 
 	return events, nil
 }
 
-// FindByID returns an event by its ID
-func (r *EventRepository) FindByID(uid string) (*models.Event, error) {
-	if uid == "" {
+// FindByID returns an event by its composite ID
+func (r *EventRepository) FindByID(id string) (*models.Event, error) {
+	if id == "" {
 		return nil, ErrInvalidID
 	}
 
 	var event models.Event
-	result := database.DB.Preload("Planning").Where("uid = ?", uid).First(&event)
+	result := database.DB.Preload("Planning").Where("id = ?", id).First(&event)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -69,14 +69,15 @@ func (r *EventRepository) FindByID(uid string) (*models.Event, error) {
 	return &event, nil
 }
 
-// FindByIDAndPlanningID returns an event by its ID and planning ID
-func (r *EventRepository) FindByIDAndPlanningID(uid, planningID string) (*models.Event, error) {
+// FindByUIDAndPlanningID returns an event by its UID and planning ID
+func (r *EventRepository) FindByUIDAndPlanningID(uid, planningID string) (*models.Event, error) {
 	if uid == "" || planningID == "" {
 		return nil, ErrInvalidID
 	}
 
+	eventID := models.GenerateEventID(uid, planningID)
 	var event models.Event
-	result := database.DB.Preload("Planning").Where("uid = ? AND planning_id = ?", uid, planningID).First(&event)
+	result := database.DB.Preload("Planning").Where("id = ?", eventID).First(&event)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

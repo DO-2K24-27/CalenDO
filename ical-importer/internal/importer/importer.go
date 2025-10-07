@@ -40,9 +40,12 @@ func (i *Importer) CreateOrUpdatePlanning(planning *models.Planning) error {
 
 // CreateOrUpdateEvent creates a new event or updates an existing one
 func (i *Importer) CreateOrUpdateEvent(event *models.Event) error {
+	// Generate composite ID
+	event.ID = models.GenerateEventID(event.UID, event.PlanningID)
+
 	// Check if event already exists
 	var existing models.Event
-	result := i.db.Where("uid = ?", event.UID).First(&existing)
+	result := i.db.Where("id = ?", event.ID).First(&existing)
 
 	if result.Error == nil {
 		// Event exists, update it
@@ -71,10 +74,11 @@ func (i *Importer) GetPlanningByID(id string) (*models.Planning, error) {
 	return &planning, nil
 }
 
-// GetEventByUID retrieves an event by its UID
-func (i *Importer) GetEventByUID(uid string) (*models.Event, error) {
+// GetEventByUID retrieves an event by its UID and planning ID
+func (i *Importer) GetEventByUID(uid, planningID string) (*models.Event, error) {
 	var event models.Event
-	err := i.db.Where("uid = ?", uid).First(&event).Error
+	eventID := models.GenerateEventID(uid, planningID)
+	err := i.db.Where("id = ?", eventID).First(&event).Error
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +95,10 @@ func (i *Importer) GetEventsByPlanningID(planningID string) ([]*models.Event, er
 	return events, nil
 }
 
-// DeleteEventByUID deletes an event by its UID
-func (i *Importer) DeleteEventByUID(uid string) error {
-	return i.db.Where("uid = ?", uid).Delete(&models.Event{}).Error
+// DeleteEventByUID deletes an event by its UID and planning ID
+func (i *Importer) DeleteEventByUID(uid, planningID string) error {
+	eventID := models.GenerateEventID(uid, planningID)
+	return i.db.Where("id = ?", eventID).Delete(&models.Event{}).Error
 }
 
 // SyncEventsForPlanning syncs events for a planning, removing events that are no longer in the iCal feed
@@ -121,7 +126,7 @@ func (i *Importer) SyncEventsForPlanning(planningID string, newEvents []*models.
 	// Delete events that are no longer in the iCal feed
 	deleteCount := 0
 	for _, uid := range eventsToDelete {
-		if err := i.DeleteEventByUID(uid); err != nil {
+		if err := i.DeleteEventByUID(uid, planningID); err != nil {
 			log.Printf("Warning: Failed to delete event %s: %v", uid, err)
 		} else {
 			deleteCount++
@@ -136,8 +141,11 @@ func (i *Importer) SyncEventsForPlanning(planningID string, newEvents []*models.
 	updateCount := 0
 	createCount := 0
 	for _, event := range newEvents {
+		// Generate composite ID
+		event.ID = models.GenerateEventID(event.UID, event.PlanningID)
+
 		var existing models.Event
-		result := i.db.Where("uid = ?", event.UID).First(&existing)
+		result := i.db.Where("id = ?", event.ID).First(&existing)
 
 		if result.Error == nil {
 			// Event exists, update it

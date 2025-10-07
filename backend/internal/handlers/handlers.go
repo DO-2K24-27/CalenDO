@@ -29,7 +29,7 @@ func RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/plannings/{id}", GetPlanningHandler).Methods("GET")
 
 	r.HandleFunc("/api/events", GetEventsHandler).Methods("GET")
-	r.HandleFunc("/api/events/{uid}", GetEventHandler).Methods("GET")
+	r.HandleFunc("/api/events/{id}", GetEventHandler).Methods("GET")
 
 	r.HandleFunc("/api/plannings/{id}/events", GetPlanningEventsHandler).Methods("GET")
 	r.HandleFunc("/api/plannings/{planningId}/events/{uid}", GetPlanningEventHandler).Methods("GET")
@@ -80,19 +80,19 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetEventHandler godoc
 // @Summary Get a specific event
-// @Description Get a calendar event by its UID
+// @Description Get a calendar event by its composite ID (uid_planningid)
 // @Tags events
 // @Produce json
-// @Param uid path string true "Event UID"
+// @Param id path string true "Event composite ID"
 // @Success 200 {object} models.EventResponse
 // @Failure 404 {object} string "Event not found"
 // @Failure 500 {object} string "Internal server error"
-// @Router /api/events/{uid} [get]
+// @Router /api/events/{id} [get]
 func GetEventHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	eventUID := vars["uid"]
+	eventID := vars["id"]
 
-	event, err := eventRepo.FindByID(eventUID)
+	event, err := eventRepo.FindByID(eventID)
 	if err == repository.ErrNotFound {
 		http.Error(w, "Event not found", http.StatusNotFound)
 		return
@@ -153,7 +153,7 @@ func GetPlanningEventHandler(w http.ResponseWriter, r *http.Request) {
 	planningID := vars["planningId"]
 	eventUID := vars["uid"]
 
-	event, err := eventRepo.FindByIDAndPlanningID(eventUID, planningID)
+	event, err := eventRepo.FindByUIDAndPlanningID(eventUID, planningID)
 	if err == repository.ErrNotFound {
 		http.Error(w, "Event not found", http.StatusNotFound)
 		return
