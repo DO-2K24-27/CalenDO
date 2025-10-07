@@ -257,7 +257,7 @@ cnpg:
   database:
     name: calendo
     owner: calendo
-    secret: calendo-postgres-credentials
+    secret: calendo-postgres-app
   resources:
     requests:
       memory: "256Mi"

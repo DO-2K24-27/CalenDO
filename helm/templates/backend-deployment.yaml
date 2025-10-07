@@ -53,8 +53,8 @@ spec:
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendo.backend.fullname" . }}-db-credentials
-                  key: DB_USER
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: username
             {{- if .Values.cnpg.enabled }}
             - name: DB_PASSWORD
               valueFrom:
@@ -71,8 +71,8 @@ spec:
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendo.backend.fullname" . }}-db-credentials
-                  key: DB_NAME
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: dbname
           volumeMounts:
             - name: config-volume
               mountPath: /app/configs

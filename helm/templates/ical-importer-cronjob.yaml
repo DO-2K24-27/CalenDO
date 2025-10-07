@@ -52,13 +52,25 @@ spec:
                   name: {{ .Values.cnpg.database.secret }}
                   key: password
             - name: DATABASE_HOST
-              value: {{ printf "%s-rw" .Values.cnpg.cluster.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: host
             - name: DATABASE_USERNAME
-              value: {{ .Values.cnpg.database.owner }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: username
             - name: DATABASE_DBNAME
-              value: {{ .Values.cnpg.database.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: dbname
             - name: DATABASE_PORT
-              value: "5432"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.cnpg.database.secret }}
+                  key: port
             - name: DATABASE_DRIVER
               value: "postgres"
             - name: DATABASE_SSLMODE
