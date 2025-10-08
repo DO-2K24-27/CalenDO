@@ -3,6 +3,7 @@ import { X, MapPin, Calendar, Clock } from 'lucide-react';
 import { Event } from '../../types';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { formatTextForDisplay } from '../../utils/textUtils';
+import { getEventColors } from '../../utils/colorUtils';
 import { useCalendar } from '../../contexts/CalendarContext';
 
 interface EventDetailProps {
@@ -17,7 +18,9 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
   
   // Get planning information
   const eventPlanning = plannings.find(p => p.id === event.planning_id) || event.planning;
-  const planningColor = eventPlanning?.color || '#8B5CF6';
+  
+  // Get dynamic colors based on event title (same as calendar views)
+  const eventColors = getEventColors(event.summary);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -41,20 +44,24 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div 
-          className="text-white p-4 relative"
-          style={{ backgroundColor: planningColor }}
+          className="p-4 relative"
+          style={{ 
+            backgroundColor: eventColors.bg,
+            color: eventColors.text
+          }}
         >
           <button
             onClick={handleClose}
-            className="absolute right-4 top-4 text-white hover:text-gray-200 transition-colors"
+            className="absolute right-4 top-4 hover:opacity-70 transition-opacity"
+            style={{ color: eventColors.text }}
             aria-label="Close"
           >
             <X size={20} />
           </button>
           <h3 className="text-xl font-bold mb-2">{event.summary}</h3>
           <div className="flex items-center text-sm">
-            <Clock size={16} className="mr-1" />
-            <span>
+            <Clock size={16} className="mr-1" style={{ color: eventColors.text }} />
+            <span style={{ color: eventColors.text }}>
               {formatTime(event.start_time)} - {formatTime(event.end_time)}
             </span>
           </div>
@@ -101,13 +108,6 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
               <p className="text-gray-600 whitespace-pre-line">{formatTextForDisplay(event.description)}</p>
             </div>
           )}
-          
-          <div className="text-xs text-gray-500 mt-4">
-            Created: {new Date(event.created).toLocaleString()}
-            {event.last_modified && (
-              <div>Modified: {new Date(event.last_modified).toLocaleString()}</div>
-            )}
-          </div>
         </div>
       </div>
     </div>
