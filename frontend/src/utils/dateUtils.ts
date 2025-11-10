@@ -141,3 +141,45 @@ export const formatDuration = (
   
   return parts.join(' ');
 };
+
+// Weekend filtering utilities
+export const isWeekend = (date: Date): boolean => {
+  const day = date.getDay();
+  return day === 0 || day === 6; // Sunday = 0, Saturday = 6
+};
+
+export const getVisibleWeekDays = (weekDays: Date[], events: Event[]): Date[] => {
+  return weekDays.filter(day => {
+    const dayOfWeek = day.getDay();
+    
+    // Always show weekdays (Monday-Friday)
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      return true;
+    }
+    
+    // For weekends, only show if there are events on that day
+    const hasEvents = events.some(event => {
+      const eventStart = new Date(event.start_time);
+      return isSameDay(eventStart, day);
+    });
+    
+    return hasEvents;
+  });
+};
+
+export const getWeekendVisibility = (weekDays: Date[], events: Event[]): { showSunday: boolean; showSaturday: boolean } => {
+  const sunday = weekDays.find(day => day.getDay() === 0);
+  const saturday = weekDays.find(day => day.getDay() === 6);
+  
+  const showSunday = sunday ? events.some(event => {
+    const eventStart = new Date(event.start_time);
+    return isSameDay(eventStart, sunday);
+  }) : false;
+  
+  const showSaturday = saturday ? events.some(event => {
+    const eventStart = new Date(event.start_time);
+    return isSameDay(eventStart, saturday);
+  }) : false;
+  
+  return { showSunday, showSaturday };
+};

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { getDaysInWeek, isSameDay, formatShortDate } from '../../utils/dateUtils';
+import { getDaysInWeek, isSameDay, formatShortDate, getVisibleWeekDays } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
@@ -10,10 +10,13 @@ const WeekView: React.FC = () => {
   const { filteredEvents, currentDate, setSelectedEvent, searchFilters } = useCalendar();
   
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
-  const weekDays = getDaysInWeek(currentDate);
+  const allWeekDays = getDaysInWeek(currentDate);
+  
+  // Filter out unused weekend days
+  const weekDays = getVisibleWeekDays(allWeekDays, searchFilteredEvents);
   const today = new Date();
   
-  // Get all events for the week to calculate optimal time range
+  // Get all events for the visible week days to calculate optimal time range
   const weekEvents = searchFilteredEvents.filter(event => {
     const eventStart = new Date(event.start_time);
     return weekDays.some(day => isSameDay(eventStart, day));
@@ -27,7 +30,13 @@ const WeekView: React.FC = () => {
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="grid grid-cols-8 week-view-header text-center py-2 border-b border-gray-200 bg-gray-50">
+      <div 
+        className="week-view-header text-center py-2 border-b border-gray-200 bg-gray-50"
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)` 
+        }}
+      >
         <div className="text-sm font-medium text-gray-500 week-view-time-column">Time</div>
         {weekDays.map((day, index) => (
           <div key={index} className="text-sm font-medium text-gray-500">
@@ -39,7 +48,13 @@ const WeekView: React.FC = () => {
         ))}
       </div>
       
-      <div className="grid grid-cols-8 week-view-grid divide-x divide-gray-200 relative">
+      <div 
+        className="week-view-grid divide-x divide-gray-200 relative"
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)` 
+        }}
+      >
         {/* Time column */}
         <div className="space-y-0">
           {Array.from({ length: visibleHours }).map((_, index) => {
