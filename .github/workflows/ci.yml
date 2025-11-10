@@ -7,7 +7,7 @@ on:
 jobs:
   # Detect changes in each project
   detect-changes:
-    runs-on: github-runner-do
+    runs-on: self-hosted
     outputs:
       backend-changed: ${{ steps.changes.outputs.backend }}
       frontend-changed: ${{ steps.changes.outputs.frontend }}
@@ -33,7 +33,7 @@ jobs:
 
   build-and-test-backend:
     needs: detect-changes
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: needs.detect-changes.outputs.backend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -63,7 +63,7 @@ jobs:
 
   build-and-test-ical-importer:
     needs: detect-changes
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: needs.detect-changes.outputs.ical-importer-changed == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -87,7 +87,7 @@ jobs:
   
   build-and-test-frontend:
     needs: detect-changes
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: needs.detect-changes.outputs.frontend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
 
   build-and-test-image-generator:
     needs: detect-changes
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: needs.detect-changes.outputs.image-generator-changed == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -140,7 +140,7 @@ jobs:
 
   docker-backend:
     needs: [detect-changes, build-and-test-backend]
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
@@ -193,7 +193,7 @@ jobs:
 
   docker-ical-importer:
     needs: [detect-changes, build-and-test-ical-importer]
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
@@ -246,7 +246,7 @@ jobs:
 
   docker-frontend:
     needs: [detect-changes, build-and-test-frontend]
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
@@ -299,7 +299,7 @@ jobs:
 
   docker-image-generator:
     needs: [detect-changes, build-and-test-image-generator]
-    runs-on: github-runner-do
+    runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
@@ -353,7 +353,7 @@ jobs:
   deploy:
     needs: [docker-backend, docker-frontend, docker-ical-importer, docker-image-generator]
     if: always() && !cancelled() && !failure()
-    runs-on: github-runner-do
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       
