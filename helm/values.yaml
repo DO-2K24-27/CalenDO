@@ -82,9 +82,10 @@ backend:
 
   ingress:
     enabled: true
-    className: nginx
+    className: traefik
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.tls: "true"
     hosts:
       - host: calendo.do-polytech.fr
         paths:
@@ -222,9 +223,10 @@ frontend:
 
   ingress:
     enabled: true
-    className: nginx
+    className: traefik
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.tls: "true"
     hosts:
       - host: calendo.do-polytech.fr
         paths:
@@ -454,9 +456,10 @@ imageGenerator:
 
   ingress:
     enabled: true
-    className: nginx
+    className: traefik
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
+      traefik.ingress.kubernetes.io/router.tls: "true"
     hosts:
       - host: img.calendo.do-polytech.fr
         paths:
