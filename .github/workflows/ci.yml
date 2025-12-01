@@ -302,5 +302,7 @@ jobs:
             --set imageGenerator.image.repository=ghcr.io/${REPO_LOWER}/calendo-image-generator \
             --set imageGenerator.image.tag=${{ github.sha }} \
             --set imageGenerator.image.pullPolicy=IfNotPresent \
+            --set imageRegistry.username=${{ github.actor }} \
+            --set imageRegistry.password=${{ secrets.GITHUB_TOKEN }} \
             --namespace hugo-calendo --create-namespace \
             --wait --timeout 15m

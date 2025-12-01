@@ -5,17 +5,23 @@
 nameOverride: ""
 fullnameOverride: ""
 
+# Image registry configuration for GitHub Container Registry
+imageRegistry:
+  username: ""  # Set via Helm install/upgrade --set imageRegistry.username=<github-username>
+  password: ""  # Set via Helm install/upgrade --set imageRegistry.password=<github-token>
+
 # Backend specific configuration
 backend:
   enabled: true
   replicaCount: 1
   
   image:
-    repository: calendo-api
-    pullPolicy: Always
+    repository: ghcr.io/do2024-2047/calendo-backend
+    pullPolicy: IfNotPresent
     tag: "latest"
 
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: ghcr-secret
 
   resources:
     limits:
@@ -150,11 +156,12 @@ frontend:
   replicaCount: 1
   
   image:
-    repository: calendo-front
-    pullPolicy: Always
+    repository: ghcr.io/do2024-2047/calendo-frontend
+    pullPolicy: IfNotPresent
     tag: "latest"
 
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: ghcr-secret
 
   resources:
     limits:
@@ -252,7 +259,7 @@ cnpg:
     instances: 1
     primaryUpdateStrategy: unsupervised
   storage:
-    storageClass: "longhorn"
+    storageClass: "local-path"
     size: 1Gi
   database:
     name: calendo
@@ -285,11 +292,12 @@ icalImporter:
     terminationGracePeriodSeconds: 30
   
   image:
-    repository: calendo-ical-importer
-    pullPolicy: Always
+    repository: ghcr.io/do2024-2047/calendo-ical-importer
+    pullPolicy: IfNotPresent
     tag: "latest"
 
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: ghcr-secret
 
   resources:
     limits:
@@ -380,11 +388,12 @@ imageGenerator:
   replicaCount: 1
   
   image:
-    repository: calendo-image-generator
-    pullPolicy: Always
+    repository: ghcr.io/do2024-2047/calendo-image-generator
+    pullPolicy: IfNotPresent
     tag: "latest"
 
-  imagePullSecrets: []
+  imagePullSecrets:
+    - name: ghcr-secret
 
   resources:
     limits:
