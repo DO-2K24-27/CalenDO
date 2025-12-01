@@ -303,6 +303,6 @@ jobs:
             --set imageGenerator.image.tag=${{ github.sha }} \
             --set imageGenerator.image.pullPolicy=IfNotPresent \
             --set imageRegistry.username=${{ github.actor }} \
-            --set imageRegistry.password=${{ secrets.GITHUB_TOKEN }} \
+            --set imageRegistry.password=${{ secrets.GHCR_PAT }} \
             --namespace hugo-calendo --create-namespace \
             --wait --timeout 15m
