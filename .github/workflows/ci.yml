@@ -5,36 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
-  # Detect changes in each project
-  detect-changes:
-    runs-on: self-hosted
-    outputs:
-      backend-changed: ${{ steps.changes.outputs.backend }}
-      frontend-changed: ${{ steps.changes.outputs.frontend }}
-      ical-importer-changed: ${{ steps.changes.outputs.ical-importer }}
-      image-generator-changed: ${{ steps.changes.outputs.image-generator }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            backend:
-              - 'backend/**'
-            frontend:
-              - 'frontend/**'
-            ical-importer:
-              - 'ical-importer/**'
-            image-generator:
-              - 'image-generator/**'
 
   build-and-test-backend:
-    needs: detect-changes
     runs-on: self-hosted
-    if: needs.detect-changes.outputs.backend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -62,9 +35,7 @@ jobs:
           swag init -g api/main.go -o docs
 
   build-and-test-ical-importer:
-    needs: detect-changes
     runs-on: self-hosted
-    if: needs.detect-changes.outputs.ical-importer-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -86,9 +57,7 @@ jobs:
         run: go test -v ./...
   
   build-and-test-frontend:
-    needs: detect-changes
     runs-on: self-hosted
-    if: needs.detect-changes.outputs.frontend-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -112,9 +81,7 @@ jobs:
         run: npm run build
 
   build-and-test-image-generator:
-    needs: detect-changes
     runs-on: self-hosted
-    if: needs.detect-changes.outputs.image-generator-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -139,7 +106,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
   docker-backend:
-    needs: [detect-changes, build-and-test-backend]
+    needs: [build-and-test-backend]
     runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
@@ -162,9 +129,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push new image if there are changes
+      # Build and push Backend Docker image
       - name: Build and push Backend Docker image
-        if: needs.detect-changes.outputs.backend-changed == 'true' && (needs.build-and-test-backend.result == 'success' || needs.build-and-test-backend.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./backend
@@ -173,27 +139,14 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
 
-      # Just tag existing latest image with current commit SHA if no changes
-      - name: Tag existing Backend Docker image
-        if: needs.detect-changes.outputs.backend-changed == 'false'
-        run: |
-          # Pull latest image
-          docker pull ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
-          # Tag it with current commit SHA
-          docker tag ghcr.io/${{ github.repository_owner }}/calendo-backend:latest ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
-          # Push the new tag
-          docker push ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
-
       - name: Keyless signing of Backend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
-          if [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
-            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
-          fi
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
 
   docker-ical-importer:
-    needs: [detect-changes, build-and-test-ical-importer]
+    needs: [build-and-test-ical-importer]
     runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
@@ -216,9 +169,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push new image if there are changes
+      # Build and push iCal Importer Docker image
       - name: Build and push iCal Importer Docker image
-        if: needs.detect-changes.outputs.ical-importer-changed == 'true' && (needs.build-and-test-ical-importer.result == 'success' || needs.build-and-test-ical-importer.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./ical-importer
@@ -227,27 +179,14 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
 
-      # Just tag existing latest image with current commit SHA if no changes
-      - name: Tag existing iCal Importer Docker image
-        if: needs.detect-changes.outputs.ical-importer-changed == 'false'
-        run: |
-          # Pull latest image
-          docker pull ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
-          # Tag it with current commit SHA
-          docker tag ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
-          # Push the new tag
-          docker push ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
-
       - name: Keyless signing of iCal Importer Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
-          if [ "${{ needs.detect-changes.outputs.ical-importer-changed }}" == "true" ]; then
-            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
-          fi
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
 
   docker-frontend:
-    needs: [detect-changes, build-and-test-frontend]
+    needs: [build-and-test-frontend]
     runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
@@ -270,9 +209,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push new image if there are changes
+      # Build and push Frontend Docker image
       - name: Build and push Frontend Docker image
-        if: needs.detect-changes.outputs.frontend-changed == 'true' && (needs.build-and-test-frontend.result == 'success' || needs.build-and-test-frontend.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -281,27 +219,14 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
 
-      # Just tag existing latest image with current commit SHA if no changes
-      - name: Tag existing Frontend Docker image
-        if: needs.detect-changes.outputs.frontend-changed == 'false'
-        run: |
-          # Pull latest image
-          docker pull ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
-          # Tag it with current commit SHA
-          docker tag ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
-          # Push the new tag
-          docker push ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
-
       - name: Keyless signing of Frontend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
-          if [ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" ]; then
-            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
-          fi
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
 
   docker-image-generator:
-    needs: [detect-changes, build-and-test-image-generator]
+    needs: [build-and-test-image-generator]
     runs-on: self-hosted
     if: always() && !cancelled() && !failure()
     permissions:
@@ -324,9 +249,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Build and push new image if there are changes
+      # Build and push Image Generator Docker image
       - name: Build and push Image Generator Docker image
-        if: needs.detect-changes.outputs.image-generator-changed == 'true' && (needs.build-and-test-image-generator.result == 'success' || needs.build-and-test-image-generator.result == 'skipped')
         uses: docker/build-push-action@v5
         with:
           context: ./image-generator
@@ -335,24 +259,11 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
 
-      # Just tag existing latest image with current commit SHA if no changes
-      - name: Tag existing Image Generator Docker image
-        if: needs.detect-changes.outputs.image-generator-changed == 'false'
-        run: |
-          # Pull latest image
-          docker pull ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
-          # Tag it with current commit SHA
-          docker tag ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
-          # Push the new tag
-          docker push ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
-
       - name: Keyless signing of Image Generator Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
           cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
-          if [ "${{ needs.detect-changes.outputs.image-generator-changed }}" == "true" ]; then
-            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
-          fi
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
 
   deploy:
     needs: [docker-backend, docker-frontend, docker-ical-importer, docker-image-generator]
