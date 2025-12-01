@@ -144,6 +144,7 @@ jobs:
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
+      packages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -157,9 +158,9 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and push new image if there are changes
       - name: Build and push Backend Docker image
@@ -169,26 +170,26 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+            ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
 
       # Just tag existing latest image with current commit SHA if no changes
       - name: Tag existing Backend Docker image
         if: needs.detect-changes.outputs.backend-changed == 'false'
         run: |
           # Pull latest image
-          docker pull ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
           # Tag it with current commit SHA
-          docker tag ${{ vars.REGISTRY_URL }}/calendo-backend:latest ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository_owner }}/calendo-backend:latest ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
           # Push the new tag
-          docker push ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
 
       - name: Keyless signing of Backend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:${{ github.sha }}
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-backend:${{ github.sha }}
           if [ "${{ needs.detect-changes.outputs.backend-changed }}" == "true" ]; then
-            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-backend:latest
+            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-backend:latest
           fi
 
   docker-ical-importer:
@@ -197,6 +198,7 @@ jobs:
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
+      packages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -210,9 +212,9 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and push new image if there are changes
       - name: Build and push iCal Importer Docker image
@@ -222,26 +224,26 @@ jobs:
           context: ./ical-importer
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+            ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
 
       # Just tag existing latest image with current commit SHA if no changes
       - name: Tag existing iCal Importer Docker image
         if: needs.detect-changes.outputs.ical-importer-changed == 'false'
         run: |
           # Pull latest image
-          docker pull ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
           # Tag it with current commit SHA
-          docker tag ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
           # Push the new tag
-          docker push ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
 
       - name: Keyless signing of iCal Importer Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:${{ github.sha }}
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:${{ github.sha }}
           if [ "${{ needs.detect-changes.outputs.ical-importer-changed }}" == "true" ]; then
-            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-ical-importer:latest
+            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-ical-importer:latest
           fi
 
   docker-frontend:
@@ -250,6 +252,7 @@ jobs:
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
+      packages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -263,9 +266,9 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and push new image if there are changes
       - name: Build and push Frontend Docker image
@@ -275,26 +278,26 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
 
       # Just tag existing latest image with current commit SHA if no changes
       - name: Tag existing Frontend Docker image
         if: needs.detect-changes.outputs.frontend-changed == 'false'
         run: |
           # Pull latest image
-          docker pull ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
           # Tag it with current commit SHA
-          docker tag ${{ vars.REGISTRY_URL }}/calendo-frontend:latest ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
           # Push the new tag
-          docker push ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
 
       - name: Keyless signing of Frontend Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:${{ github.sha }}
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-frontend:${{ github.sha }}
           if [ "${{ needs.detect-changes.outputs.frontend-changed }}" == "true" ]; then
-            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-frontend:latest
+            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-frontend:latest
           fi
 
   docker-image-generator:
@@ -303,6 +306,7 @@ jobs:
     if: always() && !cancelled() && !failure()
     permissions:
       contents: read
+      packages: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -316,9 +320,9 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and push new image if there are changes
       - name: Build and push Image Generator Docker image
@@ -328,26 +332,26 @@ jobs:
           context: ./image-generator
           push: true
           tags: |
-            ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
-            ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+            ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
 
       # Just tag existing latest image with current commit SHA if no changes
       - name: Tag existing Image Generator Docker image
         if: needs.detect-changes.outputs.image-generator-changed == 'false'
         run: |
           # Pull latest image
-          docker pull ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+          docker pull ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
           # Tag it with current commit SHA
-          docker tag ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
           # Push the new tag
-          docker push ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
 
       - name: Keyless signing of Image Generator Docker image
         run: |
           export COSIGN_EXPERIMENTAL=1
-          cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-image-generator:${{ github.sha }}
+          cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-image-generator:${{ github.sha }}
           if [ "${{ needs.detect-changes.outputs.image-generator-changed }}" == "true" ]; then
-            cosign sign -y ${{ vars.REGISTRY_URL }}/calendo-image-generator:latest
+            cosign sign -y ghcr.io/${{ github.repository_owner }}/calendo-image-generator:latest
           fi
 
   deploy:
@@ -372,16 +376,16 @@ jobs:
         run: |
           helm dependency build ./helm
           helm upgrade --install calendo ./helm \
-            --set backend.image.repository=${{ vars.REGISTRY_URL }}/calendo-backend \
+            --set backend.image.repository=ghcr.io/${{ github.repository_owner }}/calendo-backend \
             --set backend.image.tag=${{ github.sha }} \
             --set backend.image.pullPolicy=IfNotPresent \
-            --set frontend.image.repository=${{ vars.REGISTRY_URL }}/calendo-frontend \
+            --set frontend.image.repository=ghcr.io/${{ github.repository_owner }}/calendo-frontend \
             --set frontend.image.tag=${{ github.sha }} \
             --set frontend.image.pullPolicy=IfNotPresent \
-            --set icalImporter.image.repository=${{ vars.REGISTRY_URL }}/calendo-ical-importer \
+            --set icalImporter.image.repository=ghcr.io/${{ github.repository_owner }}/calendo-ical-importer \
             --set icalImporter.image.tag=${{ github.sha }} \
             --set icalImporter.image.pullPolicy=IfNotPresent \
-            --set imageGenerator.image.repository=${{ vars.REGISTRY_URL }}/calendo-image-generator \
+            --set imageGenerator.image.repository=ghcr.io/${{ github.repository_owner }}/calendo-image-generator \
             --set imageGenerator.image.tag=${{ github.sha }} \
             --set imageGenerator.image.pullPolicy=IfNotPresent \
             --namespace hugo-calendo --create-namespace \
