@@ -556,7 +556,7 @@ class DayViewGenerator:
         return image
 
 
-async def fetch_events_from_backend(target_date: date) -> List[Event]:
+async def fetch_events_from_backend(target_date: date, planning_ids: Optional[List[str]] = None) -> List[Event]:
     """Fetch events from the CalenDO backend"""
     try:
         # Fetch events
@@ -585,19 +585,27 @@ async def fetch_events_from_backend(target_date: date) -> List[Event]:
         for event_data in events_data:
             # Get the local date for this event
             event_date = temp_generator.get_local_date(event_data["start_time"])
-            if event_date == target_date:
-                planning = planning_lookup.get(event_data["planning_id"])
-                target_events.append(Event(
-                    uid=event_data["uid"],
-                    summary=event_data["summary"],
-                    description=event_data["description"],
-                    location=event_data["location"],
-                    start_time=event_data["start_time"],
-                    end_time=event_data["end_time"],
-                    planning_id=event_data["planning_id"],
-                    planning_color=planning.color if planning else "#8B5CF6",
-                    planning_name=planning.name if planning else "Default"
-                ))
+            
+            # Filter by date
+            if event_date != target_date:
+                continue
+            
+            # Filter by planning_id if specified
+            if planning_ids and event_data["planning_id"] not in planning_ids:
+                continue
+            
+            planning = planning_lookup.get(event_data["planning_id"])
+            target_events.append(Event(
+                uid=event_data["uid"],
+                summary=event_data["summary"],
+                description=event_data["description"],
+                location=event_data["location"],
+                start_time=event_data["start_time"],
+                end_time=event_data["end_time"],
+                planning_id=event_data["planning_id"],
+                planning_color=planning.color if planning else "#8B5CF6",
+                planning_name=planning.name if planning else "Default"
+            ))
 
         return target_events
 
@@ -619,7 +627,8 @@ async def root():
 async def generate_day_view_image(
     date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format (default: today)"),
     width: int = Query(800, description="Image width in pixels"),
-    height: int = Query(1000, description="Image height in pixels")
+    height: int = Query(1000, description="Image height in pixels"),
+    planning_id: Optional[List[str]] = Query(None, description="Filter by planning ID(s)")
 ):
     """Generate a day view image for the specified date"""
     try:
@@ -634,7 +643,7 @@ async def generate_day_view_image(
             target_date = datetime.now(FRANCE_TZ).date()
 
         # Fetch events
-        events = await fetch_events_from_backend(target_date)
+        events = await fetch_events_from_backend(target_date, planning_id)
 
         # Generate image
         generator = DayViewGenerator(width=width, height=height)
