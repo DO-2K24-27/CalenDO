@@ -556,7 +556,7 @@ class DayViewGenerator:
         return image
 
 
-async def fetch_events_from_backend(target_date: date, planning_ids: Optional[List[str]] = None) -> List[Event]:
+async def fetch_events_from_backend(target_date: date, planning_ids: Optional[List[str]] = None, planning_names: Optional[List[str]] = None) -> List[Event]:
     """Fetch events from the CalenDO backend"""
     try:
         # Fetch events
@@ -590,11 +590,24 @@ async def fetch_events_from_backend(target_date: date, planning_ids: Optional[Li
             if event_date != target_date:
                 continue
             
-            # Filter by planning_id if specified
-            if planning_ids and event_data["planning_id"] not in planning_ids:
-                continue
-            
+            # Filter by planning_id or planning_name if specified
             planning = planning_lookup.get(event_data["planning_id"])
+            
+            # If filters are specified, check if this event matches
+            if planning_ids or planning_names:
+                matches = False
+                
+                # Check if planning_id matches
+                if planning_ids and event_data["planning_id"] in planning_ids:
+                    matches = True
+                
+                # Check if planning_name matches
+                if planning_names and planning and planning.name in planning_names:
+                    matches = True
+                
+                if not matches:
+                    continue
+            
             target_events.append(Event(
                 uid=event_data["uid"],
                 summary=event_data["summary"],
@@ -628,7 +641,8 @@ async def generate_day_view_image(
     date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format (default: today)"),
     width: int = Query(800, description="Image width in pixels"),
     height: int = Query(1000, description="Image height in pixels"),
-    planning_id: Optional[List[str]] = Query(None, description="Filter by planning ID(s)")
+    planning_id: Optional[List[str]] = Query(None, description="Filter by planning ID(s)"),
+    planning_name: Optional[List[str]] = Query(None, description="Filter by planning name(s)")
 ):
     """Generate a day view image for the specified date"""
     try:
@@ -643,7 +657,7 @@ async def generate_day_view_image(
             target_date = datetime.now(FRANCE_TZ).date()
 
         # Fetch events
-        events = await fetch_events_from_backend(target_date, planning_id)
+        events = await fetch_events_from_backend(target_date, planning_id, planning_name)
 
         # Generate image
         generator = DayViewGenerator(width=width, height=height)
