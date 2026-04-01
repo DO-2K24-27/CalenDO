@@ -183,3 +183,46 @@ export const getWeekendVisibility = (weekDays: Date[], events: Event[]): { showS
   
   return { showSunday, showSaturday };
 };
+
+// Get the start and end dates of the week containing the given date
+export const getWeekStartEnd = (date: Date): { start: Date; end: Date } => {
+  const weekDays = getDaysInWeek(date);
+  return {
+    start: weekDays[0],
+    end: weekDays[6]
+  };
+};
+
+// Get the start and end dates of the month containing the given date
+export const getMonthStartEnd = (date: Date): { start: Date; end: Date } => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+  return { start, end };
+};
+
+// Format date range based on view type
+export const formatDateRange = (date: Date, viewType: 'day' | 'week' | 'month'): string => {
+  if (viewType === 'day') {
+    return formatDate(date);
+  }
+  
+  if (viewType === 'week') {
+    const { start, end } = getWeekStartEnd(date);
+    const startFormatted = formatShortDate(start);
+    const endFormatted = formatShortDate(end);
+    return `${startFormatted} - ${endFormatted}`;
+  }
+  
+  if (viewType === 'month') {
+    const { start, end } = getMonthStartEnd(date);
+    const monthYear = new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      year: 'numeric'
+    }).format(start);
+    return monthYear;
+  }
+  
+  return formatDate(date);
+};

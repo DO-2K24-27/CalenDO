@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { formatDate, addMonths, addDays } from '../../utils/dateUtils';
+import { formatDateRange, addMonths, addDays } from '../../utils/dateUtils';
 import { PlanningSelectionSummary } from '../Planning/PlanningSelectionSummary';
 
 const CalendarHeader: React.FC = () => {
@@ -49,7 +49,7 @@ const CalendarHeader: React.FC = () => {
       <div className="flex items-center justify-between py-2">
         <div className="flex items-center space-x-2">
           <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold truncate`}>
-            {formatDate(currentDate)}
+            {formatDateRange(currentDate, view)}
           </h2>
         </div>
         
