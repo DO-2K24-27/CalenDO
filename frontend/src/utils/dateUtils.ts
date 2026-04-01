@@ -216,7 +216,7 @@ export const formatDateRange = (date: Date, viewType: 'day' | 'week' | 'month'):
   }
   
   if (viewType === 'month') {
-    const { start, end } = getMonthStartEnd(date);
+    const { start } = getMonthStartEnd(date);
     const monthYear = new Intl.DateTimeFormat('en-US', {
       month: 'long',
       year: 'numeric'
