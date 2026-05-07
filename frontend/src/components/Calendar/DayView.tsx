@@ -92,7 +92,8 @@ const DayView: React.FC = () => {
             )}
 
             {calculateEventPositions(timedDisplayEvents).map(event => {
-              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
+              const paddingTop = allDaySegments.length > 0 ? ALL_DAY_HEIGHT : 0;
+              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + paddingTop;
               const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
               
               // Calculate width and position - use full width when no overlapping events

@@ -141,7 +141,8 @@ const WeekView: React.FC = () => {
               
               {/* Events for this day */}
               {calculateEventPositions(timedDisplayEvents).map(event => {
-                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
+                const paddingTop = weekHasAllDay ? ALL_DAY_HEIGHT : 0;
+                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + paddingTop;
                 const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 
                 const width = 100 / event.totalColumns;
