@@ -3,7 +3,8 @@ import { useCalendar } from '../../contexts/CalendarContext';
 import { 
   getDaysInMonth, 
   getFirstDayOfMonth, 
-  isSameDay 
+  isSameDay,
+  eventOccursOnDay
 } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import EventCard from '../Event/EventCard';
@@ -89,12 +90,9 @@ const MonthView: React.FC = () => {
         dropdownPositionClass = 'dropdown-right';
       }
       
-      // Get events for this day
+      // Get events for this day (includes multi-day events)
       const dayEvents = searchFilteredEvents
-        .filter(event => {
-          const eventStart = new Date(event.start_time);
-          return isSameDay(eventStart, date);
-        })
+        .filter(event => eventOccursOnDay(event, date))
         .sort((a, b) => 
           new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
         );

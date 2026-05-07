@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { getDaysInWeek, isSameDay, formatShortDate, getVisibleWeekDays } from '../../utils/dateUtils';
+import { getDaysInWeek, isSameDay, formatShortDate, getVisibleWeekDays, eventOccursOnDay } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
@@ -17,10 +17,7 @@ const WeekView: React.FC = () => {
   const today = new Date();
   
   // Get all events for the visible week days to calculate optimal time range
-  const weekEvents = searchFilteredEvents.filter(event => {
-    const eventStart = new Date(event.start_time);
-    return weekDays.some(day => isSameDay(eventStart, day));
-  });
+  const weekEvents = searchFilteredEvents.filter(event => weekDays.some(day => eventOccursOnDay(event, day)));
   
   // Calculate optimal time range based on all week events
   const { startHour, endHour } = calculateOptimalTimeRange(weekEvents);
@@ -71,11 +68,8 @@ const WeekView: React.FC = () => {
         
         {/* Day columns */}
         {weekDays.map((day, dayIndex) => {
-          // Get events for this day
-          const dayEvents = searchFilteredEvents.filter(event => {
-            const eventStart = new Date(event.start_time);
-            return isSameDay(eventStart, day);
-          });
+          // Get events for this day (includes multi-day & overlapping events)
+          const dayEvents = searchFilteredEvents.filter(event => eventOccursOnDay(event, day));
 
           // Separate all-day events from timed events
           const allDayEvents = dayEvents.filter(e => (e as any).all_day);

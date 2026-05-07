@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { isSameDay } from '../../utils/dateUtils';
+import { isSameDay, eventOccursOnDay } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
@@ -11,11 +11,8 @@ const DayView: React.FC = () => {
   
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
-  // Get events for the current day
-  const dayEvents = searchFilteredEvents.filter(event => {
-    const eventStart = new Date(event.start_time);
-    return isSameDay(eventStart, currentDate);
-  });
+  // Get events for the current day (includes multi-day and overlapping events)
+  const dayEvents = searchFilteredEvents.filter(event => eventOccursOnDay(event, currentDate));
 
   // Separate all-day events from timed events so all-day items are shown in their own strip
   const allDayEvents = dayEvents.filter(e => (e as any).all_day);

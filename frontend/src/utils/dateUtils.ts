@@ -159,10 +159,7 @@ export const getVisibleWeekDays = (weekDays: Date[], events: Event[]): Date[] =>
     }
     
     // For weekends, only show if there are events on that day
-    const hasEvents = events.some(event => {
-      const eventStart = new Date(event.start_time);
-      return isSameDay(eventStart, day);
-    });
+    const hasEvents = events.some(event => eventOccursOnDay(event, day));
     
     return hasEvents;
   });
@@ -173,16 +170,34 @@ export const getWeekendVisibility = (weekDays: Date[], events: Event[]): { showS
   const saturday = weekDays.find(day => day.getDay() === 6);
   
   const showSunday = sunday ? events.some(event => {
-    const eventStart = new Date(event.start_time);
-    return isSameDay(eventStart, sunday);
+    return eventOccursOnDay(event, sunday);
   }) : false;
   
   const showSaturday = saturday ? events.some(event => {
-    const eventStart = new Date(event.start_time);
-    return isSameDay(eventStart, saturday);
+    return eventOccursOnDay(event, saturday);
   }) : false;
   
   return { showSunday, showSaturday };
+};
+
+// Determine whether an event occurs on the given day (handles multi-day and all-day events)
+export const eventOccursOnDay = (event: Event, day: Date): boolean => {
+  const eventStart = new Date(event.start_time);
+  const eventEnd = new Date(event.end_time);
+
+  if (event.all_day) {
+    // Compare using UTC dates and treat end as exclusive
+    const dayUtc = Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
+    const startUtc = Date.UTC(eventStart.getUTCFullYear(), eventStart.getUTCMonth(), eventStart.getUTCDate());
+    const endUtc = Date.UTC(eventEnd.getUTCFullYear(), eventEnd.getUTCMonth(), eventEnd.getUTCDate());
+    return dayUtc >= startUtc && dayUtc < endUtc;
+  }
+
+  // For timed events, check for any overlap with the day's local range
+  const dayStartLocal = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+  const dayEndLocal = new Date(dayStartLocal.getTime() + 24 * 60 * 60 * 1000);
+
+  return eventStart < dayEndLocal && eventEnd > dayStartLocal;
 };
 
 // Get the start and end dates of the week containing the given date
