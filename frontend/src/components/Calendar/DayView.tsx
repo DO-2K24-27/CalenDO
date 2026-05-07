@@ -16,9 +16,13 @@ const DayView: React.FC = () => {
     const eventStart = new Date(event.start_time);
     return isSameDay(eventStart, currentDate);
   });
-  
-  // Sort events by start time
-  dayEvents.sort((a, b) => 
+
+  // Separate all-day events from timed events so all-day items are shown in their own strip
+  const allDayEvents = dayEvents.filter(e => (e as any).all_day);
+  const timedEvents = dayEvents.filter(e => !(e as any).all_day);
+
+  // Sort timed events by start time
+  timedEvents.sort((a, b) => 
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
   
@@ -27,6 +31,7 @@ const DayView: React.FC = () => {
   const visibleHours = endHour - startHour;
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
+  const ALL_DAY_HEIGHT = 36; // Height for all-day events strip
   const today = new Date();
   const isToday = isSameDay(currentDate, today);
 
@@ -63,8 +68,23 @@ const DayView: React.FC = () => {
               rangeEndHour={endHour}
             />
             
-            {calculateEventPositions(dayEvents).map(event => {
-              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
+            {/* Render all-day events in a top strip */}
+            {allDayEvents.length > 0 && (
+              <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+                {allDayEvents.map(event => (
+                  <div key={event.uid} className="flex-shrink-0">
+                    <EventCard
+                      event={event}
+                      onClick={() => setSelectedEvent(event)}
+                      compact
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {calculateEventPositions(timedEvents).map(event => {
+              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + ALL_DAY_HEIGHT;
               const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
               
               // Calculate width and position - use full width when no overlapping events

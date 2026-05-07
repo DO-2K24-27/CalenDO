@@ -27,6 +27,7 @@ const WeekView: React.FC = () => {
   const visibleHours = endHour - startHour;
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
+  const ALL_DAY_HEIGHT = 36;
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -75,9 +76,13 @@ const WeekView: React.FC = () => {
             const eventStart = new Date(event.start_time);
             return isSameDay(eventStart, day);
           });
-          
-          // Sort events by start time
-          dayEvents.sort((a, b) => 
+
+          // Separate all-day events from timed events
+          const allDayEvents = dayEvents.filter(e => (e as any).all_day);
+          const timedEvents = dayEvents.filter(e => !(e as any).all_day);
+
+          // Sort timed events by start time
+          timedEvents.sort((a, b) => 
             new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
           );
           
@@ -85,7 +90,22 @@ const WeekView: React.FC = () => {
             <div 
               key={dayIndex} 
               className={`relative ${isSameDay(day, today) ? 'bg-purple-50' : ''}`}
+              style={{ paddingTop: `${ALL_DAY_HEIGHT}px` }}
             >
+              {/* All-day strip */}
+              {allDayEvents.length > 0 && (
+                <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+                  {allDayEvents.map(event => (
+                    <div key={event.uid} className="flex-shrink-0">
+                      <EventCard
+                        event={event}
+                        onClick={() => setSelectedEvent(event)}
+                        compact
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
               {/* Hour grid for this day */}
               {Array.from({ length: visibleHours }).map((_, index) => {
                 const hour = startHour + index;
@@ -105,8 +125,8 @@ const WeekView: React.FC = () => {
               )}
               
               {/* Events for this day */}
-              {calculateEventPositions(dayEvents).map(event => {
-                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
+              {calculateEventPositions(timedEvents).map(event => {
+                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + ALL_DAY_HEIGHT;
                 const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 
                 const width = 100 / event.totalColumns;
