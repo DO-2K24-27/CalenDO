@@ -73,6 +73,7 @@ const DayView: React.FC = () => {
               isToday={isToday} 
               rangeStartHour={startHour}
               rangeEndHour={endHour}
+              topOffset={allDaySegments.length > 0 ? ALL_DAY_HEIGHT : 0}
             />
             
             {/* Render all-day events in a top strip */}

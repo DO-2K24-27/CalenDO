@@ -136,6 +136,7 @@ const WeekView: React.FC = () => {
                   isToday={true} 
                   rangeStartHour={startHour}
                   rangeEndHour={endHour}
+                  topOffset={weekHasAllDay ? ALL_DAY_HEIGHT : 0}
                 />
               )}
               

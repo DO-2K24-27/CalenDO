@@ -6,6 +6,7 @@ interface CurrentTimeCursorProps {
   isToday?: boolean;
   rangeStartHour?: number;
   rangeEndHour?: number;
+  topOffset?: number;
 }
 
 const CurrentTimeCursor: React.FC<CurrentTimeCursorProps> = ({ 
@@ -13,16 +14,18 @@ const CurrentTimeCursor: React.FC<CurrentTimeCursorProps> = ({
   isToday = true,
   rangeStartHour = 0,
   rangeEndHour = 24
+  ,
+  topOffset = 0
 }) => {
   const [currentTimePosition, setCurrentTimePosition] = useState(0);
 
   useEffect(() => {
     const updatePosition = () => {
       if (rangeStartHour > 0) {
-        setCurrentTimePosition(calculateCurrentTimePositionWithRange(hourHeight, rangeStartHour));
-      } else {
-        setCurrentTimePosition(calculateCurrentTimePosition(hourHeight));
-      }
+          setCurrentTimePosition(calculateCurrentTimePositionWithRange(hourHeight, rangeStartHour));
+        } else {
+          setCurrentTimePosition(calculateCurrentTimePosition(hourHeight));
+        }
     };
 
     // Update immediately
@@ -51,7 +54,7 @@ const CurrentTimeCursor: React.FC<CurrentTimeCursorProps> = ({
   return (
     <div
       className="absolute left-0 right-0 z-10 flex items-center"
-      style={{ top: `${currentTimePosition}px` }}
+      style={{ top: `${currentTimePosition + topOffset}px` }}
     >
       {/* Time indicator circle */}
       <div className="w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-md -ml-1.5"></div>
