@@ -39,7 +39,7 @@ const DayView: React.FC = () => {
         <div className="col-span-23 text-sm font-medium text-gray-500 text-center">Events</div>
       </div>
       
-      <div className="relative">
+      <div className="relative" style={{ paddingTop: `${allDayEvents.length > 0 ? ALL_DAY_HEIGHT : 0}px` }}>
         {/* Hour grid */}
         {Array.from({ length: visibleHours }).map((_, index) => {
           const hour = startHour + index;
@@ -67,7 +67,7 @@ const DayView: React.FC = () => {
             
             {/* Render all-day events in a top strip */}
             {allDayEvents.length > 0 && (
-              <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+              <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2 border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
                 {allDayEvents.map(event => (
                   <div key={event.uid} className="flex-shrink-0">
                     <EventCard
@@ -81,7 +81,7 @@ const DayView: React.FC = () => {
             )}
 
             {calculateEventPositions(timedEvents).map(event => {
-              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + ALL_DAY_HEIGHT;
+              const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
               const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
               
               // Calculate width and position - use full width when no overlapping events

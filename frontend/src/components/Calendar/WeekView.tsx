@@ -25,6 +25,7 @@ const WeekView: React.FC = () => {
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
   const ALL_DAY_HEIGHT = 36;
+  const weekHasAllDay = weekEvents.some(e => e.all_day);
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -54,7 +55,7 @@ const WeekView: React.FC = () => {
         }}
       >
         {/* Time column */}
-        <div className="space-y-0">
+        <div className="space-y-0" style={{ paddingTop: `${weekHasAllDay ? ALL_DAY_HEIGHT : 0}px` }}>
           {Array.from({ length: visibleHours }).map((_, index) => {
             const hour = startHour + index;
             const displayHour = hour >= 24 ? hour - 24 : hour; // Handle midnight rollover
@@ -84,11 +85,11 @@ const WeekView: React.FC = () => {
             <div 
               key={dayIndex} 
               className={`relative ${isSameDay(day, today) ? 'bg-purple-50' : ''}`}
-              style={{ paddingTop: `${ALL_DAY_HEIGHT}px` }}
+              style={{ paddingTop: `${allDayEvents.length > 0 ? ALL_DAY_HEIGHT : 0}px` }}
             >
               {/* All-day strip */}
               {allDayEvents.length > 0 && (
-                <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+                <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2 border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
                   {allDayEvents.map(event => (
                     <div key={event.uid} className="flex-shrink-0">
                       <EventCard
@@ -120,7 +121,7 @@ const WeekView: React.FC = () => {
               
               {/* Events for this day */}
               {calculateEventPositions(timedEvents).map(event => {
-                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour) + ALL_DAY_HEIGHT;
+                const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
                 const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 
                 const width = 100 / event.totalColumns;
