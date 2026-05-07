@@ -741,33 +741,77 @@ func expandRecurringEvent(baseEvent *models.Event, component *ical.Component, ma
 		return []*models.Event{baseEvent}, nil
 	}
 
-	// Parse RRULE
-	rule, err := rrule.StrToRRule(rruleProp.Value)
-	if err != nil {
-		log.Printf("Warning: Failed to parse RRULE '%s': %v", rruleProp.Value, err)
-		return []*models.Event{baseEvent}, nil
+	// Build an rrule.Set including DTSTART, RRULE, EXDATE, and RDATE so DTSTART (and its timezone)
+	// is preserved when expanding occurrences.
+	var sb strings.Builder
+	// Include DTSTART if available (prefer the raw DTSTART prop so TZID/DATE semantics are kept)
+	if dtstartProp := component.Props.Get("DTSTART"); dtstartProp != nil {
+		sb.WriteString(fmt.Sprintf("DTSTART:%s\n", dtstartProp.Value))
+	} else {
+		// Fallback to baseEvent.StartTime in UTC format
+		sb.WriteString(fmt.Sprintf("DTSTART:%s\n", baseEvent.StartTime.UTC().Format("20060102T150405Z")))
 	}
 
-	// Calculate duration
-	duration := baseEvent.EndTime.Sub(baseEvent.StartTime)
+	// Add RRULE(s)
+	for _, p := range component.Props.Values("RRULE") {
+		sb.WriteString(fmt.Sprintf("RRULE:%s\n", p.Value))
+	}
 
-	// Generate occurrences
-	occurrences := rule.Between(baseEvent.StartTime, baseEvent.StartTime.AddDate(2, 0, 0), true) // Expand for 2 years
+	// Add EXDATE(s) and RDATE(s) if present
+	for _, p := range component.Props.Values("EXDATE") {
+		sb.WriteString(fmt.Sprintf("EXDATE:%s\n", p.Value))
+	}
+	for _, p := range component.Props.Values("RDATE") {
+		sb.WriteString(fmt.Sprintf("RDATE:%s\n", p.Value))
+	}
+
+	// Parse into an rrule Set which understands EXDATE/RDATE
+	set, err := rrule.StrToRRuleSet(sb.String())
+	if err != nil {
+		// If building the set fails, fallback to single-rule parsing to avoid dropping the event
+		log.Printf("Warning: Failed to build RRuleSet from component: %v; falling back: %v", err, rruleProp.Value)
+		rule, err2 := rrule.StrToRRule(rruleProp.Value)
+		if err2 != nil {
+			log.Printf("Warning: Failed to parse RRULE '%s': %v", rruleProp.Value, err2)
+			return []*models.Event{baseEvent}, nil
+		}
+
+		duration := baseEvent.EndTime.Sub(baseEvent.StartTime)
+		occurrences := rule.Between(baseEvent.StartTime, baseEvent.StartTime.AddDate(2, 0, 0), true)
+		if len(occurrences) > maxOccurrences {
+			occurrences = occurrences[:maxOccurrences]
+		}
+
+		var events []*models.Event
+		for i, occurrence := range occurrences {
+			eventCopy := *baseEvent
+			eventCopy.StartTime = occurrence
+			eventCopy.EndTime = occurrence.Add(duration)
+			if i > 0 {
+				eventCopy.UID = fmt.Sprintf("%s-recurrence-%d", baseEvent.UID, i)
+			}
+			events = append(events, &eventCopy)
+		}
+		return events, nil
+	}
+
+	// Expand for 2 years from DTSTART
+	windowStart := baseEvent.StartTime
+	windowEnd := baseEvent.StartTime.AddDate(2, 0, 0)
+	occurrences := set.Between(windowStart, windowEnd, true)
 	if len(occurrences) > maxOccurrences {
 		occurrences = occurrences[:maxOccurrences]
 	}
 
+	duration := baseEvent.EndTime.Sub(baseEvent.StartTime)
 	var events []*models.Event
 	for i, occurrence := range occurrences {
 		eventCopy := *baseEvent
 		eventCopy.StartTime = occurrence
 		eventCopy.EndTime = occurrence.Add(duration)
-
-		// Generate unique UID for each occurrence
 		if i > 0 {
 			eventCopy.UID = fmt.Sprintf("%s-recurrence-%d", baseEvent.UID, i)
 		}
-
 		events = append(events, &eventCopy)
 	}
 
