@@ -9,15 +9,16 @@ interface EventCardProps {
   event: Event;
   onClick: () => void;
   compact?: boolean;
+  timeLabelOverride?: string;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false, timeLabelOverride }) => {
   const { searchFilters, plannings, selectedPlannings } = useCalendar();
   const { keyword } = searchFilters;
   
   const startTime = formatTime(event.start_time);
   const endTime = formatTime(event.end_time);
-  const timeLabel = event.all_day ? 'All day' : `${startTime} - ${endTime}`;
+  const timeLabel = timeLabelOverride ?? (event.all_day ? 'All day' : `${startTime} - ${endTime}`);
   
   // Get planning color, fallback to purple if not found
   const eventPlanning = plannings.find(p => p.id === event.planning_id) || event.planning;

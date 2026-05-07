@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { isSameDay, eventOccursOnDay } from '../../utils/dateUtils';
+import { isSameDay, eventOccursOnDay, getEventDaySegment } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
@@ -14,21 +14,31 @@ const DayView: React.FC = () => {
   // Get events for the current day (includes multi-day and overlapping events)
   const dayEvents = searchFilteredEvents.filter(event => eventOccursOnDay(event, currentDate));
 
-  // Separate all-day events from timed events so all-day items are shown in their own strip
-  const allDayEvents = dayEvents.filter(e => e.all_day);
-  const timedEvents = dayEvents.filter(e => !e.all_day);
+  const daySegments = dayEvents
+    .map(event => ({ event, segment: getEventDaySegment(event, currentDate) }))
+    .filter(({ segment }) => segment !== null);
+
+  // Separate all-day segments from timed segments so multi-day middle sections render as all-day
+  const allDaySegments = daySegments.filter(({ segment }) => segment?.mode === 'all-day');
+  const timedDisplayEvents = daySegments
+    .filter(({ segment }) => segment?.mode === 'timed' && segment)
+    .map(({ event, segment }) => ({
+      ...event,
+      start_time: segment!.start_time,
+      end_time: segment!.end_time
+    }));
 
   // Sort timed events by start time
-  timedEvents.sort((a, b) => 
+  timedDisplayEvents.sort((a, b) => 
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
   
   // Calculate optimal time range based on day events
-  const { startHour, endHour } = calculateOptimalTimeRange(dayEvents);
+  const { startHour, endHour } = calculateOptimalTimeRange(timedDisplayEvents);
   const visibleHours = endHour - startHour;
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
-  const ALL_DAY_HEIGHT = 36; // Height for all-day events strip
+  const ALL_DAY_HEIGHT = 64; // Height for all-day events strip
   const today = new Date();
   const isToday = isSameDay(currentDate, today);
 
@@ -39,7 +49,7 @@ const DayView: React.FC = () => {
         <div className="col-span-23 text-sm font-medium text-gray-500 text-center">Events</div>
       </div>
       
-      <div className="relative" style={{ paddingTop: `${allDayEvents.length > 0 ? ALL_DAY_HEIGHT : 0}px` }}>
+      <div className="relative" style={{ paddingTop: `${allDaySegments.length > 0 ? ALL_DAY_HEIGHT : 0}px` }}>
         {/* Hour grid */}
         {Array.from({ length: visibleHours }).map((_, index) => {
           const hour = startHour + index;
@@ -66,21 +76,22 @@ const DayView: React.FC = () => {
             />
             
             {/* Render all-day events in a top strip */}
-            {allDayEvents.length > 0 && (
-              <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2 border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
-                {allDayEvents.map(event => (
-                  <div key={event.uid} className="flex-shrink-0">
+            {allDaySegments.length > 0 && (
+              <div className="absolute left-0 right-0 px-2 py-1 flex flex-wrap gap-2 items-start content-start border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+                {allDaySegments.map(({ event, segment }) => (
+                  <div key={`${event.uid}-${segment?.mode}`} className="flex-shrink-0">
                     <EventCard
                       event={event}
                       onClick={() => setSelectedEvent(event)}
                       compact
+                      timeLabelOverride="All day"
                     />
                   </div>
                 ))}
               </div>
             )}
 
-            {calculateEventPositions(timedEvents).map(event => {
+            {calculateEventPositions(timedDisplayEvents).map(event => {
               const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
               const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
               

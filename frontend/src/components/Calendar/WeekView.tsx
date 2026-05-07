@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCalendar } from '../../contexts/CalendarContext';
-import { getDaysInWeek, isSameDay, formatShortDate, getVisibleWeekDays, eventOccursOnDay } from '../../utils/dateUtils';
+import { getDaysInWeek, isSameDay, formatShortDate, getVisibleWeekDays, getEventDaySegment } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import { calculateEventPositions, calculateEventHeight, calculateEventTopWithRange, calculateOptimalTimeRange } from '../../utils/eventUtils';
 import EventCard from '../Event/EventCard';
@@ -16,16 +16,27 @@ const WeekView: React.FC = () => {
   const weekDays = getVisibleWeekDays(allWeekDays, searchFilteredEvents);
   const today = new Date();
   
-  // Get all events for the visible week days to calculate optimal time range
-  const weekEvents = searchFilteredEvents.filter(event => weekDays.some(day => eventOccursOnDay(event, day)));
+  const weekDaySegments = weekDays.flatMap(day =>
+    searchFilteredEvents
+      .map(event => ({ event, segment: getEventDaySegment(event, day), day }))
+      .filter(({ segment }) => segment !== null)
+  );
+
+  const weekEvents = weekDaySegments
+    .filter(({ segment }) => segment?.mode === 'timed')
+    .map(({ event, segment }) => ({
+      ...event,
+      start_time: segment!.start_time,
+      end_time: segment!.end_time
+    }));
   
   // Calculate optimal time range based on all week events
   const { startHour, endHour } = calculateOptimalTimeRange(weekEvents);
   const visibleHours = endHour - startHour;
   
   const HOUR_HEIGHT = 80; // Height of each hour slot in pixels
-  const ALL_DAY_HEIGHT = 36;
-  const weekHasAllDay = weekEvents.some(e => e.all_day);
+  const ALL_DAY_HEIGHT = 64;
+  const weekHasAllDay = weekDaySegments.some(({ segment }) => segment?.mode === 'all-day');
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -70,14 +81,22 @@ const WeekView: React.FC = () => {
         {/* Day columns */}
         {weekDays.map((day, dayIndex) => {
           // Get events for this day (includes multi-day & overlapping events)
-          const dayEvents = searchFilteredEvents.filter(event => eventOccursOnDay(event, day));
+          const daySegments = searchFilteredEvents
+            .map(event => ({ event, segment: getEventDaySegment(event, day) }))
+            .filter(({ segment }) => segment !== null);
 
           // Separate all-day events from timed events
-          const allDayEvents = dayEvents.filter(e => e.all_day);
-          const timedEvents = dayEvents.filter(e => !e.all_day);
+          const allDaySegments = daySegments.filter(({ segment }) => segment?.mode === 'all-day');
+          const timedDisplayEvents = daySegments
+            .filter(({ segment }) => segment?.mode === 'timed' && segment)
+            .map(({ event, segment }) => ({
+              ...event,
+              start_time: segment!.start_time,
+              end_time: segment!.end_time
+            }));
 
           // Sort timed events by start time
-          timedEvents.sort((a, b) => 
+          timedDisplayEvents.sort((a, b) => 
             new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
           );
           
@@ -85,17 +104,18 @@ const WeekView: React.FC = () => {
             <div 
               key={dayIndex} 
               className={`relative ${isSameDay(day, today) ? 'bg-purple-50' : ''}`}
-              style={{ paddingTop: `${allDayEvents.length > 0 ? ALL_DAY_HEIGHT : 0}px` }}
+              style={{ paddingTop: `${weekHasAllDay ? ALL_DAY_HEIGHT : 0}px` }}
             >
               {/* All-day strip */}
-              {allDayEvents.length > 0 && (
-                <div className="absolute left-0 right-0 px-2 py-1 flex space-x-2 border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
-                  {allDayEvents.map(event => (
-                    <div key={event.uid} className="flex-shrink-0">
+              {allDaySegments.length > 0 && (
+                <div className="absolute left-0 right-0 px-2 py-1 flex flex-wrap gap-2 items-start content-start border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
+                  {allDaySegments.map(({ event, segment }) => (
+                    <div key={`${event.uid}-${segment?.mode}`} className="flex-shrink-0">
                       <EventCard
                         event={event}
                         onClick={() => setSelectedEvent(event)}
                         compact
+                        timeLabelOverride="All day"
                       />
                     </div>
                   ))}
@@ -120,7 +140,7 @@ const WeekView: React.FC = () => {
               )}
               
               {/* Events for this day */}
-              {calculateEventPositions(timedEvents).map(event => {
+              {calculateEventPositions(timedDisplayEvents).map(event => {
                 const top = calculateEventTopWithRange(event.start_time, HOUR_HEIGHT, startHour);
                 const height = calculateEventHeight(event.start_time, event.end_time, HOUR_HEIGHT);
                 

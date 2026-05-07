@@ -4,11 +4,16 @@ import {
   getDaysInMonth, 
   getFirstDayOfMonth, 
   isSameDay,
-  eventOccursOnDay
+  getEventDaySegment
 } from '../../utils/dateUtils';
 import { filterEvents } from '../../utils/searchUtils';
 import EventCard from '../Event/EventCard';
 import { Event } from '../../types';
+
+interface DayEventEntry {
+  event: Event;
+  timeLabelOverride?: string;
+}
 
 const MonthView: React.FC = () => {
   const { 
@@ -19,7 +24,7 @@ const MonthView: React.FC = () => {
   } = useCalendar();
 
   const [showDropdown, setShowDropdown] = useState<string | null>(null);
-  const [selectedDayEvents, setSelectedDayEvents] = useState<Event[]>([]);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<DayEventEntry[]>([]);
 
   const searchFilteredEvents = filterEvents(filteredEvents, searchFilters);
   
@@ -29,7 +34,7 @@ const MonthView: React.FC = () => {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOfMonth = getFirstDayOfMonth(year, month);
   
-  const handleShowMoreEvents = (dateStr: string, events: Event[]) => {
+  const handleShowMoreEvents = (dateStr: string, events: DayEventEntry[]) => {
     if (showDropdown === dateStr) {
       setShowDropdown(null);
       setSelectedDayEvents([]);
@@ -92,9 +97,31 @@ const MonthView: React.FC = () => {
       
       // Get events for this day (includes multi-day events)
       const dayEvents = searchFilteredEvents
-        .filter(event => eventOccursOnDay(event, date))
+        .map(event => {
+          const segment = getEventDaySegment(event, date);
+
+          if (!segment) {
+            return null;
+          }
+
+          if (segment.mode === 'timed') {
+            return {
+              event: {
+                ...event,
+                start_time: segment.start_time,
+                end_time: segment.end_time
+              }
+            } satisfies DayEventEntry;
+          }
+
+          return {
+            event,
+            timeLabelOverride: 'All day'
+          } satisfies DayEventEntry;
+        })
+        .filter((entry): entry is DayEventEntry => entry !== null)
         .sort((a, b) => 
-          new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          new Date(a.event.start_time).getTime() - new Date(b.event.start_time).getTime()
         );
       
       days.push(
@@ -111,12 +138,13 @@ const MonthView: React.FC = () => {
             {day}
           </div>
           <div className="space-y-1">
-            {dayEvents.slice(0, 3).map(event => (
+            {dayEvents.slice(0, 3).map(({ event, timeLabelOverride }) => (
               <EventCard 
                 key={event.uid} 
                 event={event} 
                 onClick={() => setSelectedEvent(event)}
                 compact
+                timeLabelOverride={timeLabelOverride}
               />
             ))}
             {dayEvents.length > 3 && (
@@ -131,7 +159,7 @@ const MonthView: React.FC = () => {
                   <div className={`absolute top-full z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1 
                                   mobile-dropdown md:left-0 md:right-0 md:w-auto md:transform-none ${dropdownPositionClass}`}>
                     <div className="p-3 space-y-1">
-                      {selectedDayEvents.map(event => (
+                      {selectedDayEvents.map(({ event, timeLabelOverride }) => (
                         <EventCard 
                           key={event.uid} 
                           event={event} 
@@ -140,6 +168,7 @@ const MonthView: React.FC = () => {
                             setShowDropdown(null);
                           }}
                           compact={true}
+                          timeLabelOverride={timeLabelOverride}
                         />
                       ))}
                     </div>

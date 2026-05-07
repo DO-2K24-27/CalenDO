@@ -200,6 +200,51 @@ export const eventOccursOnDay = (event: Event, day: Date): boolean => {
   return eventStart < dayEndLocal && eventEnd > dayStartLocal;
 };
 
+export interface EventDaySegment {
+  mode: 'timed' | 'all-day';
+  start_time: string;
+  end_time: string;
+}
+
+export const getEventDaySegment = (event: Event, day: Date): EventDaySegment | null => {
+  if (!eventOccursOnDay(event, day)) {
+    return null;
+  }
+
+  if (event.all_day) {
+    return {
+      mode: 'all-day',
+      start_time: event.start_time,
+      end_time: event.end_time
+    };
+  }
+
+  const eventStart = new Date(event.start_time);
+  const eventEnd = new Date(event.end_time);
+  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+  const startsBeforeDay = eventStart < dayStart;
+  const endsAfterDay = eventEnd > dayEnd;
+
+  if (startsBeforeDay && endsAfterDay) {
+    return {
+      mode: 'all-day',
+      start_time: event.start_time,
+      end_time: event.end_time
+    };
+  }
+
+  const startTime = startsBeforeDay ? dayStart : eventStart;
+  const endTime = endsAfterDay ? dayEnd : eventEnd;
+
+  return {
+    mode: 'timed',
+    start_time: startTime.toISOString(),
+    end_time: endTime.toISOString()
+  };
+};
+
 // Get the start and end dates of the week containing the given date
 export const getWeekStartEnd = (date: Date): { start: Date; end: Date } => {
   const weekDays = getDaysInWeek(date);

@@ -148,14 +148,16 @@ export const calculateCurrentTimePosition = (hourHeight: number): number => {
  * Returns start and end hours based on event times, with minimum range of 6am-8pm
  */
 export const calculateOptimalTimeRange = (events: Event[]): { startHour: number; endHour: number } => {
-  if (events.length === 0) {
+  const timedEvents = events.filter(event => !event.all_day);
+
+  if (timedEvents.length === 0) {
     return { startHour: 6, endHour: 20 }; // Default 6am-8pm if no events
   }
 
   let earliestHour = 24;
   let latestHour = 0;
 
-  events.forEach(event => {
+  timedEvents.forEach(event => {
     const startTime = new Date(event.start_time);
     const endTime = new Date(event.end_time);
     
