@@ -502,22 +502,11 @@ func parseEvent(component *ical.Component, planningID string) (*models.Event, er
 }
 
 func parseDateTimeProperty(prop *ical.Prop) (time.Time, error) {
-	value := prop.Value
-
-	// Try different time formats
-	formats := []string{
-		"20060102T150405Z", // UTC format
-		"20060102T150405",  // Local format
-		"20060102",         // Date only
+	if prop == nil {
+		return time.Time{}, fmt.Errorf("unable to parse nil date property")
 	}
 
-	for _, format := range formats {
-		if t, err := time.Parse(format, value); err == nil {
-			return t, nil
-		}
-	}
-
-	return time.Time{}, fmt.Errorf("unable to parse date: %s", value)
+	return prop.DateTime(time.UTC)
 }
 
 func extractNameFromURL(urlStr string) string {
