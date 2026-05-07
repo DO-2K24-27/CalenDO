@@ -15,8 +15,8 @@ const DayView: React.FC = () => {
   const dayEvents = searchFilteredEvents.filter(event => eventOccursOnDay(event, currentDate));
 
   // Separate all-day events from timed events so all-day items are shown in their own strip
-  const allDayEvents = dayEvents.filter(e => (e as any).all_day);
-  const timedEvents = dayEvents.filter(e => !(e as any).all_day);
+  const allDayEvents = dayEvents.filter(e => e.all_day);
+  const timedEvents = dayEvents.filter(e => !e.all_day);
 
   // Sort timed events by start time
   timedEvents.sort((a, b) => 
