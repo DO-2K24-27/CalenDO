@@ -133,8 +133,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --push \
-            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-backend:latest \
-            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-backend:latest,mode=max \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-backend:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-backend:buildcache,mode=max \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --tag ghcr.io/${REPO_LOWER}/calendo-backend:${{ github.sha }} \
             --tag ghcr.io/${REPO_LOWER}/calendo-backend:latest \
@@ -177,8 +177,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --push \
-            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-ical-importer:latest \
-            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-ical-importer:latest,mode=max \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-ical-importer:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-ical-importer:buildcache,mode=max \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --tag ghcr.io/${REPO_LOWER}/calendo-ical-importer:${{ github.sha }} \
             --tag ghcr.io/${REPO_LOWER}/calendo-ical-importer:latest \
@@ -221,8 +221,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --push \
-            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-frontend:latest \
-            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-frontend:latest,mode=max \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-frontend:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-frontend:buildcache,mode=max \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --tag ghcr.io/${REPO_LOWER}/calendo-frontend:${{ github.sha }} \
             --tag ghcr.io/${REPO_LOWER}/calendo-frontend:latest \
@@ -265,8 +265,8 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --push \
-            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-image-generator:latest \
-            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-image-generator:latest,mode=max \
+            --cache-from type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-image-generator:buildcache \
+            --cache-to type=registry,ref=ghcr.io/${REPO_LOWER}/calendo-image-generator:buildcache,mode=max \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             --tag ghcr.io/${REPO_LOWER}/calendo-image-generator:${{ github.sha }} \
             --tag ghcr.io/${REPO_LOWER}/calendo-image-generator:latest \
