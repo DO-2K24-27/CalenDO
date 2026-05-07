@@ -36,13 +36,15 @@ export const getFirstDayOfMonth = (year: number, month: number): number => {
 
 export const getDaysInWeek = (date: Date): Date[] => {
   const day = date.getDay();
-  const diff = date.getDate() - day;
+  // Calculate days back to Monday (1)
+  // Sunday (0) -> 6 days back, Monday (1) -> 0 days back, etc.
+  const diff = (day - 1 + 7) % 7;
   
   return Array(7)
     .fill(0)
     .map((_, index) => {
       const newDate = new Date(date);
-      newDate.setDate(diff + index);
+      newDate.setDate(date.getDate() - diff + index);
       return newDate;
     });
 };
