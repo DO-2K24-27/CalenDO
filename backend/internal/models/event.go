@@ -14,6 +14,7 @@ type Event struct {
 	LastModified time.Time `json:"last_modified" gorm:"column:last_modified"`
 	StartTime    time.Time `json:"start_time" gorm:"column:start_time"`
 	EndTime      time.Time `json:"end_time" gorm:"column:end_time"`
+	AllDay       bool      `json:"all_day" gorm:"column:all_day;default:false"`
 	Summary      string    `json:"summary" gorm:"column:summary"`
 	Location     string    `json:"location" gorm:"column:location"`
 	Description  string    `json:"description" gorm:"column:description"`

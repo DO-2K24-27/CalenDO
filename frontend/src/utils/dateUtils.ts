@@ -1,11 +1,12 @@
 import { Event } from '../types';
 
-export const formatDate = (date: Date): string => {
+export const formatDate = (date: Date, timeZone?: string): string => {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    ...(timeZone ? { timeZone } : {})
   }).format(date);
 };
 

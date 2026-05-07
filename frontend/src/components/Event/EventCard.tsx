@@ -17,6 +17,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
   
   const startTime = formatTime(event.start_time);
   const endTime = formatTime(event.end_time);
+  const timeLabel = event.all_day ? 'All day' : `${startTime} - ${endTime}`;
   
   // Get planning color, fallback to purple if not found
   const eventPlanning = plannings.find(p => p.id === event.planning_id) || event.planning;
@@ -43,7 +44,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
           {highlightText(event.summary, keyword)}
         </div>
         <div className="text-xs opacity-75 truncate leading-tight">
-          {startTime}
+          {timeLabel}
         </div>
         {showPlanningName && eventPlanning && (
           <div className="text-xs opacity-60 truncate leading-tight">
@@ -64,7 +65,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false }
         color: eventColors.text
       }}
     >
-      <div className="text-xs mb-1">{startTime} - {endTime}</div>
+      <div className="text-xs mb-1">{timeLabel}</div>
       <div className="font-medium truncate">
         {highlightText(event.summary, keyword)}
       </div>

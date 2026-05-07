@@ -14,6 +14,7 @@ type EventResponse struct {
 	Location     string            `json:"location"`
 	StartTime    time.Time         `json:"start_time"`
 	EndTime      time.Time         `json:"end_time"`
+	AllDay       bool              `json:"all_day"`
 	Created      time.Time         `json:"created"`
 	LastModified time.Time         `json:"last_modified"`
 	Planning     *PlanningResponse `json:"planning,omitempty"`
@@ -30,6 +31,7 @@ func (e *Event) ToResponse() EventResponse {
 		Location:     e.Location,
 		StartTime:    e.StartTime,
 		EndTime:      e.EndTime,
+		AllDay:       e.AllDay,
 		Created:      e.Created,
 		LastModified: e.LastModified,
 	}

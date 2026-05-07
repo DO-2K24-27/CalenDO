@@ -461,8 +461,11 @@ func parseEvent(component *ical.Component, planningID string) (*models.Event, er
 		event.Location = location.Value
 	}
 
+	allDay := false
+
 	// Parse dates
 	if dtstart := component.Props.Get("DTSTART"); dtstart != nil {
+		allDay = allDay || isDateOnlyProperty(dtstart)
 		startTime, err := parseDateTimeProperty(dtstart)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse start time: %w", err)
@@ -471,6 +474,7 @@ func parseEvent(component *ical.Component, planningID string) (*models.Event, er
 	}
 
 	if dtend := component.Props.Get("DTEND"); dtend != nil {
+		allDay = allDay || isDateOnlyProperty(dtend)
 		endTime, err := parseDateTimeProperty(dtend)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse end time: %w", err)
@@ -480,6 +484,8 @@ func parseEvent(component *ical.Component, planningID string) (*models.Event, er
 		// If no end time, assume 1 hour duration
 		event.EndTime = event.StartTime.Add(time.Hour)
 	}
+
+	event.AllDay = allDay
 
 	// Parse timestamps
 	now := time.Now()
@@ -507,6 +513,14 @@ func parseDateTimeProperty(prop *ical.Prop) (time.Time, error) {
 	}
 
 	return prop.DateTime(time.UTC)
+}
+
+func isDateOnlyProperty(prop *ical.Prop) bool {
+	if prop == nil {
+		return false
+	}
+
+	return strings.EqualFold(prop.Params.Get("VALUE"), "DATE")
 }
 
 func extractNameFromURL(urlStr string) string {

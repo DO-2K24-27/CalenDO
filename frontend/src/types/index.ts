@@ -17,6 +17,7 @@ export interface Event {
   location: string;
   start_time: string;
   end_time: string;
+  all_day: boolean;
   created: string;
   last_modified: string;
   planning?: Planning;

@@ -15,6 +15,8 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
   const { plannings } = useCalendar();
   const [isClosing, setIsClosing] = useState(false);
   const startDate = new Date(event.start_time);
+  const dateLabel = formatDate(startDate, event.all_day ? 'UTC' : undefined);
+  const timeLabel = event.all_day ? 'All day' : `${formatTime(event.start_time)} - ${formatTime(event.end_time)}`;
   
   // Get planning information
   const eventPlanning = plannings.find(p => p.id === event.planning_id) || event.planning;
@@ -62,7 +64,7 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
           <div className="flex items-center text-sm">
             <Clock size={16} className="mr-1" style={{ color: eventColors.text }} />
             <span style={{ color: eventColors.text }}>
-              {formatTime(event.start_time)} - {formatTime(event.end_time)}
+              {timeLabel}
             </span>
           </div>
         </div>
@@ -88,7 +90,7 @@ const EventDetail: React.FC<EventDetailProps> = ({ event, onClose }) => {
             <Calendar size={18} className="text-gray-500 mr-2 mt-0.5" />
             <div>
               <div className="font-medium">Date</div>
-              <div className="text-gray-600">{formatDate(startDate)}</div>
+              <div className="text-gray-600">{dateLabel}</div>
             </div>
           </div>
           
