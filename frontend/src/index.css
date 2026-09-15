@@ -42,6 +42,17 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 100px;
 }
 
+/* Used by MonthView's `fillHeight` mode (e.g. the /display page) so the 6
+   week rows evenly share the available height instead of sizing to content. */
+.monthly-calendar-grid-fill {
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.monthly-calendar-grid-fill .calendar-cell {
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Mobile-specific dropdown styling */
 @media (max-width: 768px) {
   .calendar-cell {
