@@ -68,7 +68,7 @@ func GetEventsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to response format
-	var responses []models.EventResponse
+	responses := []models.EventResponse{}
 	for _, event := range events {
 		responses = append(responses, event.ToResponse())
 	}
@@ -127,7 +127,7 @@ func GetPlanningEventsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to response format
-	var responses []models.EventResponse
+	responses := []models.EventResponse{}
 	for _, event := range events {
 		responses = append(responses, event.ToResponse())
 	}

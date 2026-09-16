@@ -122,11 +122,11 @@ h1, h2, h3, h4, h5, h6 {
 
   /* Week view mobile fixes for time column overlap */
   .week-view-header {
-    grid-template-columns: 60px repeat(7, 1fr) !important;
+    grid-template-columns: 60px repeat(var(--week-days-count, 7), 1fr) !important;
   }
-  
+
   .week-view-grid {
-    grid-template-columns: 60px repeat(7, 1fr) !important;
+    grid-template-columns: 60px repeat(var(--week-days-count, 7), 1fr) !important;
   }
   
   .week-view-time-column {

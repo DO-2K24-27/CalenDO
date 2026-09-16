@@ -64,7 +64,12 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
   const showDays = days > 0;
   const showHours = hours > 0 || showDays;
   const showMinutes = minutes > 0 || showHours;
-  
+
+  // Pad a unit with a leading zero when it isn't the most significant unit shown
+  const pad = (value: number) => value.toString().padStart(2, '0');
+  const displayMinutes = showHours ? pad(minutes) : minutes;
+  const displaySeconds = showMinutes ? pad(seconds) : seconds;
+
   // Calculate font size based on available units for better scaling
   const unitCount = [showDays, showHours, showMinutes, true].filter(Boolean).length;
   
@@ -122,14 +127,14 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ breakDate }) => {
         {showMinutes && (
           <>
             <div className="flex flex-col items-center">
-              <div className={`${getNumberSize()} font-bold text-purple-700 leading-none`}>{minutes}</div>
+              <div className={`${getNumberSize()} font-bold text-purple-700 leading-none`}>{displayMinutes}</div>
               <div className={`${getLabelSize()} text-purple-500 mt-1 sm:mt-2`}>Minutes</div>
             </div>
             <div className={`${getSeparatorSize()} font-bold text-purple-300 leading-none`}>:</div>
           </>
         )}
         <div className="flex flex-col items-center">
-          <div className={`${getNumberSize()} font-bold text-purple-700 leading-none`}>{seconds}</div>
+          <div className={`${getNumberSize()} font-bold text-purple-700 leading-none`}>{displaySeconds}</div>
           <div className={`${getLabelSize()} text-purple-500 mt-1 sm:mt-2`}>Seconds</div>
         </div>
       </div>

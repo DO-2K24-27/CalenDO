@@ -35,7 +35,7 @@ func GetPlanningsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert to response format
-	var responses []models.PlanningResponse
+	responses := []models.PlanningResponse{}
 	for _, planning := range plannings {
 		responses = append(responses, planning.ToResponse())
 	}

@@ -40,12 +40,13 @@ const WeekView: React.FC = () => {
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div 
+      <div
         className="week-view-header text-center py-2 border-b border-gray-200 bg-gray-50"
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)` 
-        }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)`,
+          '--week-days-count': weekDays.length
+        } as React.CSSProperties}
       >
         <div className="text-sm font-medium text-gray-500 week-view-time-column">Time</div>
         {weekDays.map((day, index) => (
@@ -58,12 +59,13 @@ const WeekView: React.FC = () => {
         ))}
       </div>
       
-      <div 
+      <div
         className="week-view-grid divide-x divide-gray-200 relative"
-        style={{ 
-          display: 'grid', 
-          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)` 
-        }}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `auto repeat(${weekDays.length}, 1fr)`,
+          '--week-days-count': weekDays.length
+        } as React.CSSProperties}
       >
         {/* Time column */}
         <div className="space-y-0" style={{ paddingTop: `${weekHasAllDay ? ALL_DAY_HEIGHT : 0}px` }}>
