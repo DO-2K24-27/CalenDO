@@ -35,6 +35,17 @@ docker-compose up -d database
 - The API will be available at `http://localhost:8080`
 - The frontend will be available at `http://localhost:3000`
 
+### Fullscreen Display Page
+
+The frontend exposes a chrome-less `/display` route meant for a TV/kiosk screen, showing just the calendar without the header or footer. It's configured entirely through URL query parameters, so it doesn't require any interaction once loaded:
+
+- `view`: `month`, `week`, or `day` (defaults to whatever view was last used on this browser)
+- `date`: `YYYY-MM-DD`, the date to center the view on (defaults to today)
+- `plannings`: comma-separated planning names to filter on, e.g. `FISE1,FISA2` (case-insensitive, matched against each planning's name). Omit the parameter to keep the current filter, or pass an empty value (`plannings=`) to show every planning.
+- `save`: `true` to persist the `view`/`plannings` from this load to `localStorage` (like the main calendar page does), then redirect to a bare `/display` with no query params. Useful to configure a kiosk screen once and have it reload afterwards without needing the parameters again. Defaults to `false` (nothing is persisted).
+
+Example (one-time setup, then bookmark the resulting bare `/display`): `http://localhost:3000/display?view=week&plannings=FISE1,FISA2&save=true`
+
 ### Accessing the API
 
 The following endpoints are available:

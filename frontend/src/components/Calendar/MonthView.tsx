@@ -15,9 +15,16 @@ interface DayEventEntry {
   timeLabelOverride?: string;
 }
 
-const MonthView: React.FC = () => {
-  const { 
-    filteredEvents, 
+interface MonthViewProps {
+  // Stretch the grid to fill the height of its parent instead of sizing to
+  // content. Only safe when the parent has a bounded height (e.g. a flex
+  // layout with a viewport-based height), which is why it's opt-in.
+  fillHeight?: boolean;
+}
+
+const MonthView: React.FC<MonthViewProps> = ({ fillHeight = false }) => {
+  const {
+    filteredEvents,
     currentDate,
     setSelectedEvent,
     searchFilters
@@ -201,15 +208,15 @@ const MonthView: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden calendar-main-container relative">
-      <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden calendar-main-container relative ${fillHeight ? 'h-full flex flex-col' : ''}`}>
+      <div className={`grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50 ${fillHeight ? 'shrink-0' : ''}`}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="text-sm font-medium text-gray-500">
             {day}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 monthly-calendar-grid">
+      <div className={`grid grid-cols-7 monthly-calendar-grid ${fillHeight ? 'flex-1 monthly-calendar-grid-fill' : ''}`}>
         {renderDays()}
       </div>
     </div>

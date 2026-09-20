@@ -16,10 +16,14 @@ interface CalendarContextType {
   searchFilters: SearchFilters;
   setCurrentDate: (date: Date) => void;
   setView: (view: CalendarViewType) => void;
+  // Update the view/selection without persisting to localStorage - used by the
+  // URL-driven /display page so it never overwrites the user's saved preferences.
+  setViewSilently: (view: CalendarViewType) => void;
   setSelectedEvent: (event: Event | null) => void;
   setSearchFilters: (filters: SearchFilters) => void;
   setCurrentPlanning: (planning: Planning | null) => void; // Keep for backward compatibility
   setSelectedPlannings: (plannings: Planning[]) => void;
+  setSelectedPlanningsSilently: (plannings: Planning[]) => void;
   togglePlanningSelection: (planning: Planning) => void;
   selectAllPlannings: () => void;
   clearPlanningSelection: () => void;
@@ -206,10 +210,12 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     searchFilters,
     setCurrentDate,
     setView: handleSetView,
+    setViewSilently: setView,
     setSelectedEvent,
     setSearchFilters,
     setCurrentPlanning: handleSetCurrentPlanning,
     setSelectedPlannings: handleSetSelectedPlannings,
+    setSelectedPlanningsSilently: setSelectedPlannings,
     togglePlanningSelection,
     selectAllPlannings,
     clearPlanningSelection,

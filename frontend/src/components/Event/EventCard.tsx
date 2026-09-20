@@ -47,6 +47,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, onClick, compact = false, 
         <div className="text-xs opacity-75 truncate leading-tight">
           {timeLabel}
         </div>
+        {event.location && (
+          <div className="text-xs opacity-75 truncate leading-tight">
+            📍 {highlightText(event.location, keyword)}
+          </div>
+        )}
         {showPlanningName && eventPlanning && (
           <div className="text-xs opacity-60 truncate leading-tight">
             {eventPlanning.name}
