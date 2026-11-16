@@ -112,7 +112,7 @@ const WeekView: React.FC = () => {
               {allDaySegments.length > 0 && (
                 <div className="absolute left-0 right-0 px-2 py-1 flex flex-wrap gap-2 items-start content-start border-b border-gray-200 bg-gray-50" style={{ height: `${ALL_DAY_HEIGHT}px`, top: 0 }}>
                   {allDaySegments.map(({ event, segment }) => (
-                    <div key={`${event.uid}-${segment?.mode}`} className="flex-shrink-0">
+                    <div key={`${event.id}-${segment?.mode}`} className="flex-shrink-0">
                       <EventCard
                         event={event}
                         onClick={() => setSelectedEvent(event)}
@@ -153,7 +153,7 @@ const WeekView: React.FC = () => {
                 
                 return (
                   <div
-                    key={event.uid}
+                    key={event.id}
                     style={{ 
                       top: `${top}px`, 
                       height: `${height}px`, 

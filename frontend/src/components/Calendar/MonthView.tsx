@@ -140,7 +140,7 @@ const MonthView: React.FC = () => {
           <div className="space-y-1">
             {dayEvents.slice(0, 3).map(({ event, timeLabelOverride }) => (
               <EventCard 
-                key={event.uid} 
+                key={event.id} 
                 event={event} 
                 onClick={() => setSelectedEvent(event)}
                 compact
@@ -161,7 +161,7 @@ const MonthView: React.FC = () => {
                     <div className="p-3 space-y-1">
                       {selectedDayEvents.map(({ event, timeLabelOverride }) => (
                         <EventCard 
-                          key={event.uid} 
+                          key={event.id} 
                           event={event} 
                           onClick={() => {
                             setSelectedEvent(event);

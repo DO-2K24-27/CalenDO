@@ -10,6 +10,7 @@ export interface Planning {
 }
 
 export interface Event {
+  id: string;
   uid: string;
   planning_id: string;
   summary: string;
