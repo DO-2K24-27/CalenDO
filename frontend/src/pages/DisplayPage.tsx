@@ -18,9 +18,13 @@ const parseDateParam = (value: string | null): Date | null => {
   if (!value) return null;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return null;
-  const [, year, month, day] = match;
-  const date = new Date(Number(year), Number(month) - 1, Number(day));
-  return Number.isNaN(date.getTime()) ? null : date;
+  const [y, m, d] = match.slice(1).map(Number);
+  const date = new Date(y, m - 1, d);
+  // `new Date` silently rolls invalid dates over (2026-02-31 -> March 3), so
+  // reject anything that doesn't round-trip to the same Y-M-D.
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+    ? date
+    : null;
 };
 
 const DisplayPage: React.FC = () => {
