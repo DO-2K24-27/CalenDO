@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useCalendar } from '../../contexts/CalendarContext';
 import { 
   getDaysInMonth, 
@@ -15,9 +16,16 @@ interface DayEventEntry {
   timeLabelOverride?: string;
 }
 
-const MonthView: React.FC = () => {
-  const { 
-    filteredEvents, 
+interface MonthViewProps {
+  // Stretch the grid to fill the height of its parent instead of sizing to
+  // content. Only safe when the parent has a bounded height (e.g. a flex
+  // layout with a viewport-based height), which is why it's opt-in.
+  fillHeight?: boolean;
+}
+
+const MonthView: React.FC<MonthViewProps> = ({ fillHeight = false }) => {
+  const {
+    filteredEvents,
     currentDate,
     setSelectedEvent,
     searchFilters
@@ -155,7 +163,7 @@ const MonthView: React.FC = () => {
                 >
                   +{dayEvents.length - 3} more
                 </button>
-                {showDropdown === dateStr && (
+                {showDropdown === dateStr && !fillHeight && (
                   <div className={`absolute top-full z-50 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1 
                                   mobile-dropdown md:left-0 md:right-0 md:w-auto md:transform-none ${dropdownPositionClass}`}>
                     <div className="p-3 space-y-1">
@@ -201,17 +209,41 @@ const MonthView: React.FC = () => {
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden calendar-main-container relative">
-      <div className="grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden calendar-main-container relative ${fillHeight ? 'h-full flex flex-col' : ''}`}>
+      <div className={`grid grid-cols-7 text-center py-2 border-b border-gray-200 bg-gray-50 ${fillHeight ? 'shrink-0' : ''}`}>
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="text-sm font-medium text-gray-500">
             {day}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 monthly-calendar-grid">
+      <div className={`grid grid-cols-7 monthly-calendar-grid ${fillHeight ? 'flex-1 monthly-calendar-grid-fill' : ''}`}>
         {renderDays()}
       </div>
+      {/* In fillHeight mode the cells clip their overflow (so rows stay evenly
+          sized), which would hide the inline dropdown. Render the extra
+          events in a portal-based overlay instead so nothing can clip it. */}
+      {fillHeight && showDropdown && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="dropdown-container bg-white border border-gray-200 rounded-lg shadow-lg w-full max-w-sm max-h-[70vh] overflow-y-auto">
+            <div className="p-3 space-y-1">
+              {selectedDayEvents.map(({ event, timeLabelOverride }) => (
+                <EventCard
+                  key={event.uid}
+                  event={event}
+                  onClick={() => {
+                    setSelectedEvent(event);
+                    setShowDropdown(null);
+                  }}
+                  compact={true}
+                  timeLabelOverride={timeLabelOverride}
+                />
+              ))}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

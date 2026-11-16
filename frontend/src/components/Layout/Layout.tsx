@@ -6,14 +6,16 @@ import Header from './Header';
 const Layout: React.FC = () => {
   const location = useLocation();
   const isCountdownPage = location.pathname === '/countdown';
+  const isDisplayPage = location.pathname === '/display';
+  const hideChrome = isCountdownPage || isDisplayPage;
 
   return (
     <div className="flex flex-col min-h-screen bg-purple-50">
-      {!isCountdownPage && <Header />}
+      {!hideChrome && <Header />}
       <main className="flex-grow">
         <Outlet />
       </main>
-      {!isCountdownPage && (
+      {!hideChrome && (
         <footer className="bg-white py-4 shadow-inner">
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
