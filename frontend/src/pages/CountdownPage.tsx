@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Maximize, Minimize } from 'lucide-react';
 import { useCalendar } from '../contexts/CalendarContext';
@@ -6,10 +6,11 @@ import CountdownTimer from '../components/Countdown/CountdownTimer';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 import ErrorDisplay from '../components/UI/ErrorDisplay';
 import { findNextBreak } from '../utils/dateUtils';
+import { useFullscreen } from '../hooks/useFullscreen';
 
 const CountdownPage: React.FC = () => {
   const { filteredEvents, selectedPlannings, isLoading, error, refreshEvents } = useCalendar();
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isFullscreen = useFullscreen();
   const navigate = useNavigate();
   
   const nextBreakDate = useMemo(() => {
@@ -27,20 +28,9 @@ const CountdownPage: React.FC = () => {
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(console.error);
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen?.();
-      setIsFullscreen(false);
     }
-  }, []);
-  
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
   
   const handleBackToCalendar = useCallback(() => {
